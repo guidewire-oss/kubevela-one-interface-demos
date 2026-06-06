@@ -1,0 +1,14 @@
+# Crossplane AWS ProviderConfig.
+# Points the AWS provider at the `aws-credentials` secret (created from .env.aws).
+# Namespace is the default crossplane namespace; update if CROSSPLANE_NAMESPACE changes.
+apiVersion: aws.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: aws-credentials
+      key: credentials

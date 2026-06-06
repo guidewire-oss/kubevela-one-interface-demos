@@ -1,0 +1,38 @@
+# The minimal "one interface" application.
+#
+# A developer declares: run this image, expose this port, make it production-HA.
+# That's it. The high-availability trait (platform/traits/high-availability)
+# injects the HPA, PodDisruptionBudget, topology spread, and anti-affinity — none
+# of which appear here. Compare against the dozens of lines of raw Kubernetes
+# YAML this replaces.
+apiVersion: core.oam.dev/v1beta1
+kind: Application
+metadata:
+  name: web-service
+  namespace: default
+spec:
+  components:
+    - name: api
+      type: webservice
+      properties:
+        image: nginx:1.27
+        ports:
+          - port: 8080
+            expose: true
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      traits:
+        # Declare intent — "production HA" — not the implementation.
+        - type: high-availability
+          properties:
+            level: prod

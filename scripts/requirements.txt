@@ -1,0 +1,5 @@
+# Python dependencies for the demo tooling.
+# Installed into .venv by init.sh (Phase 0).
+
+# Config loading (scripts/load_config.py parses each demo's config.yaml).
+PyYAML==6.0.2

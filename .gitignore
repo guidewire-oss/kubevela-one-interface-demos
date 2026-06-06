@@ -1,0 +1,49 @@
+# AWS / cloud credentials
+.aws-creds
+.env.aws
+.env
+.env.*
+*.tfvars
+
+# Kubeconfig files (contain private keys — never commit)
+kubeconfig*
+kubeconfig-*
+.kubeconfig
+
+# Local registry markers
+k3d-registry.localhost:5000
+localhost:5000
+
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# Go (defkit)
+bin/
+vendor/
+
+# Terraform (legacy/imperative comparisons)
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# MCP / local tooling
+.mcp.json
+
+# Local progress / resume notes (not for commit)
+claude-progress.md
+CLAUDE.md
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo

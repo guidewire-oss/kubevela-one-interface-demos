@@ -1,0 +1,8 @@
+# Crossplane AWS S3 provider.
+# S3-only AWS provider for this repo's Track 1 (Crossplane + S3).
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: upbound-provider-aws-s3
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-s3:v1.23.2
