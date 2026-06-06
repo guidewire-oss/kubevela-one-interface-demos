@@ -44,6 +44,8 @@ source "$REPO_ROOT/scripts/load-aws-env.sh"
 source "$REPO_ROOT/scripts/install-crossplane.sh"
 # shellcheck source=../../scripts/create-aws-secret.sh
 source "$REPO_ROOT/scripts/create-aws-secret.sh"
+# shellcheck source=../../scripts/apply-crossplane-function.sh
+source "$REPO_ROOT/scripts/apply-crossplane-function.sh"
 # shellcheck source=../../scripts/apply-crossplane-provider.sh
 source "$REPO_ROOT/scripts/apply-crossplane-provider.sh"
 # shellcheck source=../../scripts/apply-crossplane-provider-config.sh
@@ -67,15 +69,16 @@ print_step "Phase 3: Install cloud-resource orchestrator (Crossplane)"
 install_crossplane
 # Sub-step: wait for Crossplane CRDs to register before anything uses them.
 wait_for_crossplane_crds
-# Sub-step: AWS provider wiring, in dependency order —
+# Sub-step: Crossplane packages + provider wiring, in dependency order —
 #   1) the aws-credentials secret (from .env.aws creds loaded in Phase 2),
-#   2) the provider package (registers the aws.upbound.io ProviderConfig CRD),
-#   3) the ProviderConfig (needs both the CRD above and the secret).
+#   2) the function(s) used by Composition pipelines (function-patch-and-transform),
+#   3) the provider packages (aws-s3 + kubernetes; register their CRDs),
+#   4) the ProviderConfigs (need the provider CRDs above, and aws needs the secret).
 create_aws_secret "$CROSSPLANE_NAMESPACE" aws-credentials
+apply_crossplane_function "$REPO_ROOT/platform/crossplane/function"
 apply_crossplane_provider "$REPO_ROOT/platform/crossplane/provider"
 apply_crossplane_provider_config "$REPO_ROOT/platform/crossplane/provider-config"
-# TODO (next): apply $SETUP_DIR/ manifests (function-patch-and-transform,
-# provider-kubernetes), then the S3 XRD + Composition + component.
+# The S3 XRD + Composition (platform/crossplane/s3/) are applied by setup.sh Phase 1.
 
 print_step "Phase 4: Install KubeVela control plane"
 # --velaux also enables the VelaUX addon and port-forwards it to :8000.

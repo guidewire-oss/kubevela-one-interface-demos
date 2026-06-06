@@ -39,7 +39,7 @@ commands and the building blocks they exercise.
 | Beat | Uses |
 |------|------|
 | Declare an app, get HA for free | [`kubevela/web-service.yaml`](kubevela/web-service.yaml) + [`high-availability` trait](../../platform/traits/high-availability/) |
-| Claim an **S3 bucket** from the same YAML — Crossplane then ACK | `../../platform/components/` (`bucket`) + [`../../platform/compositions/s3/`](../../platform/compositions/s3/) (🚧) |
+| Claim an **S3 bucket** from the same YAML — Crossplane then ACK | `../../platform/components/` (`bucket`) + [`../../platform/crossplane/s3/`](../../platform/crossplane/s3/) (🚧) |
 | Extend the interface in Go | [`../../defkit/`](../../defkit/) |
 
 > 🚧 Build order: (1) `bucket` component + Crossplane S3 composition, (2) ACK S3

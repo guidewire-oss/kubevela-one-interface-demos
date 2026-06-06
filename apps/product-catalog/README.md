@@ -32,23 +32,33 @@ python app.py
 ./test_api.sh
 ```
 
-## Docker Build
+## Build & push the image (for the demo)
+
+Use the build script — it builds from this folder's `Dockerfile`, pushes to the
+local k3d registry, and prints the in-cluster image reference to drop into the
+KubeVela `Application`:
 
 ```bash
-# Build the image
-docker build -t kv-product-cat-api:v1.0.0 .
+./build-image.sh
+#  → pushes  localhost:5000/product-catalog:v1.0.0
+#  → use     k3d-registry.localhost:5000/product-catalog:v1.0.0  in the Application
 
-# Run locally
+# Optional overrides:
+#   ./build-image.sh [image_name] [tag] [host_registry] [incluster_registry]
+```
+
+(The k3d cluster + local registry are created by the demo's `init.sh`.)
+
+### Run standalone (without Kubernetes)
+
+```bash
+docker build -t product-catalog:v1.0.0 .
 docker run -p 8080:8080 \
-  -e S3_BUCKET_NAME=tenant-atlantis-product-images \
+  -e S3_BUCKET_NAME=your-bucket \
   -e AWS_REGION=us-west-2 \
   -e AWS_ACCESS_KEY_ID=your_access_key \
   -e AWS_SECRET_ACCESS_KEY=your_secret_key \
-  kv-product-cat-api:v1.0.0
-
-# Push to k3d local registry
-docker tag kv-product-cat-api:v1.0.0 localhost:5000/kv-product-cat-api:v1.0.0
-docker push localhost:5000/kv-product-cat-api:v1.0.0
+  product-catalog:v1.0.0
 ```
 
 ## Environment Variables

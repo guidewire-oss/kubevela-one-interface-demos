@@ -40,6 +40,7 @@ example.
 | `load-aws-env.sh` | `load_aws_env` | Source `.env.aws` (export AWS creds) or write a template |
 | `create-aws-secret.sh` | `create_aws_secret` | Build the `aws-credentials` k8s secret from env creds |
 | `install-crossplane.sh` | `install_crossplane`, `wait_for_crossplane_crds` | Helm-install Crossplane + wait for CRDs |
+| `apply-crossplane-function.sh` | `apply_crossplane_function` | Apply a Function manifest dir + wait installed/healthy |
 | `apply-crossplane-provider.sh` | `apply_crossplane_provider` | Apply a provider manifest dir + wait installed/healthy |
 | `apply-crossplane-provider-config.sh` | `apply_crossplane_provider_config` | Apply a ProviderConfig manifest dir |
 | `install-kubevela.sh` | `install_kubevela` | `vela install` + wait, optional VelaUX |
@@ -165,6 +166,17 @@ install_crossplane
 wait_for_crossplane_crds
 ```
 
+## apply-crossplane-function.sh — `apply_crossplane_function <function_dir>`
+
+`kubectl apply` every manifest in `function_dir`, then wait for all Crossplane
+functions to be **installed** and **healthy**. Functions (e.g.
+`function-patch-and-transform`) are used by Composition pipelines. **Requires:** `kubectl`.
+
+```bash
+source scripts/apply-crossplane-function.sh
+apply_crossplane_function "$REPO_ROOT/platform/crossplane/function"
+```
+
 ## apply-crossplane-provider.sh — `apply_crossplane_provider <provider_dir>`
 
 `kubectl apply` every manifest in `provider_dir`, then wait for all Crossplane
@@ -212,6 +224,7 @@ source "$REPO_ROOT/scripts/create-cluster.sh"
 source "$REPO_ROOT/scripts/load-aws-env.sh"
 source "$REPO_ROOT/scripts/install-crossplane.sh"
 source "$REPO_ROOT/scripts/create-aws-secret.sh"
+source "$REPO_ROOT/scripts/apply-crossplane-function.sh"
 source "$REPO_ROOT/scripts/apply-crossplane-provider.sh"
 source "$REPO_ROOT/scripts/apply-crossplane-provider-config.sh"
 source "$REPO_ROOT/scripts/install-kubevela.sh"
@@ -225,6 +238,7 @@ load_aws_env "$DEMO_DIR/.env.aws"             # export AWS creds (or stop)
 install_crossplane
 wait_for_crossplane_crds
 create_aws_secret "$CROSSPLANE_NAMESPACE" aws-credentials
+apply_crossplane_function "$REPO_ROOT/platform/crossplane/function"
 apply_crossplane_provider "$REPO_ROOT/platform/crossplane/provider"
 apply_crossplane_provider_config "$REPO_ROOT/platform/crossplane/provider-config"
 install_kubevela --velaux

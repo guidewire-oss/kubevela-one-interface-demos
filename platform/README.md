@@ -18,7 +18,7 @@ implementation without seeing it.
 | [`components/`](components/) | `ComponentDefinition` | Deployable building blocks a developer can request — web services, workers, and **claims** for cloud resources (database, bucket, queue). |
 | [`traits/`](traits/) | `TraitDefinition` | Cross-cutting capabilities auto-injected onto components — HA, observability, compliance, security context. This is where "auto-inject best practices" lives. |
 | [`policies/`](policies/) | `PolicyDefinition` | App-wide governance — topology (which clusters/namespaces), per-environment overrides, guardrails. |
-| [`compositions/`](compositions/) | Crossplane `XRD` + `Composition` | The cloud-resource implementations a component claim resolves to. Vendor-neutral interface: swap Crossplane for ACK or KCC without touching the developer's Application. |
+| [`crossplane/`](crossplane/) | Crossplane `Provider` / `ProviderConfig` / `XRD` + `Composition` | All Crossplane assets (provider, provider-config, per-resource definition + composition) — the cloud-resource implementations a component claim resolves to. Vendor-neutral: Track 2 swaps in ACK (`../ack/`) without touching the developer's Application. |
 
 ## Authoring a definition
 

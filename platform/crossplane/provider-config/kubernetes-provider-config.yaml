@@ -1,0 +1,10 @@
+# ProviderConfig for the Crossplane Kubernetes provider. InjectedIdentity uses the
+# provider's in-cluster ServiceAccount (see ../provider/provider-kubernetes.yaml) —
+# no secret required.
+apiVersion: kubernetes.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  credentials:
+    source: InjectedIdentity

@@ -46,7 +46,7 @@ kubevela-one-interface-demos/
 │   ├── components/    #   ComponentDefinitions (CUE)
 │   ├── traits/        #   TraitDefinitions — auto-inject HA, observability, compliance
 │   ├── policies/      #   PolicyDefinitions — governance, topology, overrides
-│   └── compositions/  #   S3 backends — Crossplane (track 1) then ACK (track 2)
+│   └── crossplane/    #   Crossplane assets — AWS provider, ProviderConfig, S3 XRD+Composition (Track 1; ACK = platform/ack/ later)
 ├── apps/              # Application source code (one folder per app)
 ├── demos/             # Runnable, self-contained scenarios (one per event/topic)
 │   └── kubecon-in-2026/   #   KubeCon India 2026 demo — runs per-demo:
