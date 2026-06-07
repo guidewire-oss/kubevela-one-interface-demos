@@ -13,14 +13,18 @@ Application. Two flavours:
   or **ACK (Track 2)** in `../../ack/s3/` (later). The developer never sees the cloud
   primitive and the claim YAML is identical across backends.
 
+## Available components
+
+| Component | File | What it does |
+|-----------|------|--------------|
+| **`bucket`** | `bucket.cue` | S3 bucket **claim** (composite). Resolves to the `XS3Bucket` composite → the Crossplane Composition in [`../../crossplane/s3/`](../../crossplane/s3/). Backend-swappable (Crossplane today, ACK later). Versioning is a parameter. **Use this for the one-interface story.** |
+| `s3-bucket` | `s3-bucket.cue` | **Direct** S3 bucket — wraps the AWS `Bucket` managed resource itself (no XRD/Composition). Pair with the `s3-versioning` trait. Not backend-swappable; an alternative pattern. |
+
 ## Conventions
 
 - Intent-based parameters with `// +usage=` docs.
 - For claims, include `healthPolicy` + `customStatus` so `vela status` shows real
   provisioning progress (e.g. surfacing the provisioned ARN/endpoint).
 - Keep cloud-specific detail inside the composition, not the component — that is
-  what keeps the interface vendor-neutral.
-
-> 🚧 First component to build: **`bucket`** (S3 claim). It must resolve cleanly
-> against both the Crossplane composition (`../../crossplane/s3/`) and the later ACK
-> backend (`../../ack/s3/`) without the developer-facing parameters changing.
+  what keeps the interface vendor-neutral (the `bucket` claim follows this; the
+  direct `s3-bucket` deliberately does not).

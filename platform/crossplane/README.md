@@ -53,6 +53,6 @@ exists identically across both backends, making the side-by-side swap the cleare
 - `setup.sh` applies `s3/` (definition + composition) as part of the platform
   building blocks, before deploying the Application that claims a bucket.
 
-> 🚧 The S3 `definition.yaml`/`composition.yaml` still carry placeholder naming
-> (`demo.kubecon.io` group, `XS3Bucket`, `tenant-atlantis-` bucket prefix) pending a
-> coordinated generalization with the `bucket` component + Application.
+The S3 `definition.yaml`/`composition.yaml` use the API group `platform.example.com`
+(composite kind `XS3Bucket`); the bucket name is the claim's `spec.name` (no prefix).
+They pair with the `bucket` component in `../kubevela/components/`.

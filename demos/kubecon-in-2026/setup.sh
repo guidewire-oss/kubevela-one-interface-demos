@@ -25,10 +25,16 @@ print_warning "Applying Crossplane S3 definition + composition..."
 kubectl apply -f "$REPO_ROOT/platform/crossplane/s3/definition.yaml"
 kubectl apply -f "$REPO_ROOT/platform/crossplane/s3/composition.yaml"
 print_success "S3 definition + composition applied"
-# NOTE: the composition pipeline uses function-patch-and-transform, which isn't
-# installed yet (pending the setup-manifests step) — provisioning won't actually
-# run until that lands.
-# TODO: vela def apply the high-availability trait + the (pending) bucket component.
+# (function-patch-and-transform, which the composition pipeline uses, is installed
+# by init.sh Phase 3.)
+
+# Apply the developer-facing `bucket` ComponentDefinition (CUE) so an Application
+# can claim an S3 bucket. The XRD + Composition above are what it resolves to.
+print_warning "Applying the 'bucket' ComponentDefinition (vela def apply)..."
+vela def apply "$REPO_ROOT/platform/kubevela/components/bucket.cue"
+print_success "'bucket' ComponentDefinition installed"
+# TODO: apply the other X-Definitions as the demo Application needs them
+#   (high-availability trait, and — for the direct approach — s3-bucket + s3-versioning).
 
 print_step "Phase 2: Build + deploy the application (the What)"
 

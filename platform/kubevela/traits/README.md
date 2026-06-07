@@ -14,6 +14,7 @@ maps intent to the underlying Kubernetes resources.
 | Trait | Status | What it injects |
 |-------|--------|-----------------|
 | [`high-availability/`](high-availability/) | ✅ example | HPA + PodDisruptionBudget + topology spread + pod anti-affinity, selected by `level` (dev/staging/prod/prod-local). |
+| [`s3-versioning/`](s3-versioning/) | ✅ | Enables versioning on the **direct** `s3-bucket` component (patches its AWS `Bucket`). The `bucket` claim handles versioning via its own parameter instead. |
 | `observability/` | 🚧 planned | Prometheus scrape annotations, ServiceMonitor, dashboards — zero developer config. |
 | `compliance/` | 🚧 planned | Required labels/tags, security context, network policy — governance that "runs itself". |
 

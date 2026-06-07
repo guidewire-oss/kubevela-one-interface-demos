@@ -1,9 +1,9 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xs3buckets.demo.kubecon.io
+  name: xs3buckets.platform.example.com
 spec:
-  group: demo.kubecon.io
+  group: platform.example.com
   names:
     kind: XS3Bucket
     plural: xs3buckets
@@ -20,7 +20,7 @@ spec:
               properties:
                 name:
                   type: string
-                  description: "Name of the S3 bucket (will be prefixed with tenant-atlantis-)"
+                  description: "Name of the S3 bucket"
                 region:
                   type: string
                   description: "AWS region"
