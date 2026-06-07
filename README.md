@@ -43,10 +43,11 @@ and HA so developers never hand-write that boilerplate.
 ```
 kubevela-one-interface-demos/
 ├── platform/          # "The How" — platform-team building blocks
-│   ├── components/    #   ComponentDefinitions (CUE)
-│   ├── traits/        #   TraitDefinitions — auto-inject HA, observability, compliance
-│   ├── policies/      #   PolicyDefinitions — governance, topology, overrides
-│   └── crossplane/    #   Crossplane assets — AWS provider, ProviderConfig, S3 XRD+Composition (Track 1; ACK = platform/ack/ later)
+│   ├── kubevela/      #   KubeVela X-Definitions:
+│   │   ├── components/ #     ComponentDefinitions (workloads + resource claims)
+│   │   ├── traits/     #     TraitDefinitions — auto-inject HA, observability, compliance
+│   │   └── policies/   #     PolicyDefinitions — governance, topology, overrides
+│   └── crossplane/    #   Crossplane assets — function, providers, ProviderConfigs, S3 XRD+Composition (Track 1; ACK = platform/ack/ later)
 ├── apps/              # Application source code (one folder per app)
 ├── demos/             # Runnable, self-contained scenarios (one per event/topic)
 │   └── kubecon-in-2026/   #   KubeCon India 2026 demo — runs per-demo:

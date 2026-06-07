@@ -39,7 +39,7 @@ developer Application — only the platform-side backend changes:
 | **1 (now)** | Crossplane | `platform/crossplane/s3/` (here) |
 | **2 (later)** | AWS ACK | `platform/ack/s3/` (to be added) |
 
-The `bucket` component in [`../components/`](../components/) and the developer's
+The `bucket` component in [`../kubevela/components/`](../kubevela/components/) and the developer's
 Application stay **identical** across both tracks. Switching Track 1 → Track 2 swaps
 only the backend assets — that's the "one interface to rule them all" promise applied
 to infrastructure. S3 is first because it's simple to provision reliably on stage and

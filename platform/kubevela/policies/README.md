@@ -11,7 +11,7 @@ App-wide governance that the platform team standardizes so it "runs itself":
 Built-in KubeVela policies (`topology`, `override`, `shared-resource`) cover most
 needs; add custom `PolicyDefinition` CUE here only when the built-ins fall short.
 
-See the multi-environment workflow in [`../../apps/`](../../apps/) for how
+See the multi-environment workflow in [`../../../apps/`](../../../apps/) for how
 `topology` + `override` policies drive a dev → staging → prod promotion from a
 single Application.
 

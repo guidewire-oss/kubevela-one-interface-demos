@@ -9,8 +9,8 @@ Application. Two flavours:
   Deployment/Job with sane defaults.
 - **Resource claims** — starting with **`bucket`** (S3), later `database`,
   `queue`. The developer claims the resource; the component resolves to a backend
-  chosen on the platform side — **Crossplane (Track 1)** in [`../crossplane/s3/`](../crossplane/s3/)
-  or **ACK (Track 2)** in `../ack/s3/` (later). The developer never sees the cloud
+  chosen on the platform side — **Crossplane (Track 1)** in [`../../crossplane/s3/`](../../crossplane/s3/)
+  or **ACK (Track 2)** in `../../ack/s3/` (later). The developer never sees the cloud
   primitive and the claim YAML is identical across backends.
 
 ## Conventions
@@ -22,5 +22,5 @@ Application. Two flavours:
   what keeps the interface vendor-neutral.
 
 > 🚧 First component to build: **`bucket`** (S3 claim). It must resolve cleanly
-> against both the Crossplane composition (`../crossplane/s3/`) and the later ACK
-> backend (`../ack/s3/`) without the developer-facing parameters changing.
+> against both the Crossplane composition (`../../crossplane/s3/`) and the later ACK
+> backend (`../../ack/s3/`) without the developer-facing parameters changing.

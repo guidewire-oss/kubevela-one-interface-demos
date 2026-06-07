@@ -13,18 +13,27 @@ implementation without seeing it.
 
 ## Contents
 
+Grouped by technology:
+
+### [`kubevela/`](kubevela/) — KubeVela X-Definitions
+
 | Directory | KubeVela kind | Purpose |
 |-----------|---------------|---------|
-| [`components/`](components/) | `ComponentDefinition` | Deployable building blocks a developer can request — web services, workers, and **claims** for cloud resources (database, bucket, queue). |
-| [`traits/`](traits/) | `TraitDefinition` | Cross-cutting capabilities auto-injected onto components — HA, observability, compliance, security context. This is where "auto-inject best practices" lives. |
-| [`policies/`](policies/) | `PolicyDefinition` | App-wide governance — topology (which clusters/namespaces), per-environment overrides, guardrails. |
-| [`crossplane/`](crossplane/) | Crossplane `Provider` / `ProviderConfig` / `XRD` + `Composition` | All Crossplane assets (provider, provider-config, per-resource definition + composition) — the cloud-resource implementations a component claim resolves to. Vendor-neutral: Track 2 swaps in ACK (`../ack/`) without touching the developer's Application. |
+| [`kubevela/components/`](kubevela/components/) | `ComponentDefinition` | Deployable building blocks a developer can request — web services, workers, and **claims** for cloud resources (database, bucket, queue). |
+| [`kubevela/traits/`](kubevela/traits/) | `TraitDefinition` | Cross-cutting capabilities auto-injected onto components — HA, observability, compliance, security context. This is where "auto-inject best practices" lives. |
+| [`kubevela/policies/`](kubevela/policies/) | `PolicyDefinition` | App-wide governance — topology (which clusters/namespaces), per-environment overrides, guardrails. |
+
+### [`crossplane/`](crossplane/) — Crossplane assets
+
+`Provider` / `ProviderConfig` / `Function` / `XRD` + `Composition` — the
+cloud-resource implementations a component claim resolves to. Vendor-neutral: Track 2
+swaps in ACK (`ack/`) without touching the developer's Application.
 
 ## Authoring a definition
 
 ```bash
 # From CUE
-vela def apply platform/traits/high-availability/high-availability.cue
+vela def apply platform/kubevela/traits/high-availability/high-availability.cue
 
 # Inspect what a definition exposes to developers
 vela def get high-availability

@@ -26,7 +26,7 @@ Show the split without deploying yet:
 
 ```bash
 # The How — platform team's building blocks
-ls platform/traits platform/components platform/policies
+ls platform/kubevela/traits platform/kubevela/components platform/kubevela/policies
 vela def get high-availability        # the intent-based interface devs see
 
 # The What — the developer's entire input
