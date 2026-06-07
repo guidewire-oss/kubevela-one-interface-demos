@@ -6,14 +6,18 @@ set -euo pipefail
 # platform-team building blocks (the How) and then deploys a developer-facing
 # Application (the What) to prove the one-interface model end to end.
 #
-# STATUS: partial. The image build (Phase 2a) is wired; applying platform defs
-# (Phase 1) and deploying the Application (Phase 2b) are stubs pending the S3
-# component/composition + the product-catalog Application.
+# STATUS: partial. Phase 1 (apply S3 definition+composition + bucket component),
+# Phase 2a (build image) and Phase 2b (AWS creds in app namespaces) are wired;
+# Phase 2c (deploy the Application) is a stub pending the demo Application.
 
 DEMO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$DEMO_DIR/../.." && pwd)"
 # shellcheck source=../../scripts/common.sh
 source "$REPO_ROOT/scripts/common.sh"
+# shellcheck source=../../scripts/load-aws-env.sh
+source "$REPO_ROOT/scripts/load-aws-env.sh"
+# shellcheck source=../../scripts/create-aws-secret.sh
+source "$REPO_ROOT/scripts/create-aws-secret.sh"
 
 print_step "KubeVela: One Interface — platform + app setup"
 
@@ -44,8 +48,18 @@ print_step "Phase 2: Build + deploy the application (the What)"
 print_step "Phase 2a: Build application image"
 bash "$REPO_ROOT/apps/product-catalog/build-image.sh"
 
-# 2b — Deploy this demo's KubeVela Application(s).
-print_step "Phase 2b: Deploy the application"
+# 2b — AWS credentials in the app namespaces (dev/staging/prod). App pods mount this
+#      secret to reach S3. setup.sh is a separate process from init.sh, so load
+#      .env.aws here to get AWS_* into the environment; then create the secret per
+#      namespace (creating the namespace if it doesn't exist).
+print_step "Phase 2b: Set up AWS credentials in app namespaces"
+load_aws_env "$DEMO_DIR/.env.aws"
+for ns in dev staging prod; do
+    create_aws_secret --create-namespace "$ns" aws-credentials
+done
+
+# 2c — Deploy this demo's KubeVela Application(s).
+print_step "Phase 2c: Deploy the application"
 print_warning "TODO: deploy this demo's KubeVela Application (pending the product-catalog Application)"
 # The current kubevela/web-service.yaml is an nginx placeholder; the product-catalog
 # Application that uses the image built above is still to be added.
