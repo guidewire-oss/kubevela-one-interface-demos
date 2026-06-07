@@ -27,23 +27,24 @@ Show the split without deploying yet:
 ```bash
 # The How — platform team's building blocks
 ls platform/kubevela/traits platform/kubevela/components platform/kubevela/policies
-vela def get high-availability        # the intent-based interface devs see
+vela def get bucket                   # the intent-based S3 claim devs see
 
 # The What — the developer's entire input
-cat demos/kubecon-in-2026/kubevela/web-service.yaml
+cat demos/kubecon-in-2026/kubevela/product-catalog.yaml
 ```
 
-Land the point: the developer file has **no** HPA, PDB, affinity, or cloud detail.
+Land the point: one file declares the app, its traits (autoscaling, security,
+resources) and an S3 bucket **claim** by name — no raw Kubernetes or cloud detail.
 
-## 4. One interface in action: deploy + auto-injected HA — ~6 min
+## 4. One interface in action: deploy app + provision S3 — ~6 min
 
 ```bash
-vela up -f demos/kubecon-in-2026/kubevela/web-service.yaml
-vela status web-service
+vela up -f demos/kubecon-in-2026/kubevela/product-catalog.yaml
+vela status product-catalog
 
-# Everything the high-availability trait injected from `level: prod`:
-kubectl get deploy,hpa,pdb -A
-kubectl get pod -o wide               # anti-affinity / topology spread effect
+# What the traits + override policies + bucket claim produced:
+kubectl get deploy,hpa -A
+kubectl get xs3buckets -A             # the S3 bucket claim (composite)
 ```
 
 Talk track: the developer asked for "production". The platform team's encoded
@@ -98,6 +99,5 @@ interface to rule them all.
 ## Reset between runs
 
 ```bash
-vela delete web-service -y
-# vela delete web-service-with-db -y   # when added
+vela delete product-catalog -y
 ```

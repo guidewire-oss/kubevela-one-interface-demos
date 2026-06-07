@@ -6,9 +6,9 @@ set -euo pipefail
 # platform-team building blocks (the How) and then deploys a developer-facing
 # Application (the What) to prove the one-interface model end to end.
 #
-# STATUS: partial. Phase 1 (apply S3 definition+composition + bucket component),
-# Phase 2a (build image) and Phase 2b (AWS creds in app namespaces) are wired;
-# Phase 2c (deploy the Application) is a stub pending the demo Application.
+# STATUS: Phase 1 (apply S3 definition+composition + bucket component), Phase 2a
+# (build image), Phase 2b (AWS creds in app namespaces) and Phase 2c (deploy the
+# product-catalog Application) are all wired. Phase 3 (verify) is still a stub.
 
 DEMO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$DEMO_DIR/../.." && pwd)"
@@ -60,10 +60,12 @@ done
 
 # 2c — Deploy this demo's KubeVela Application(s).
 print_step "Phase 2c: Deploy the application"
-print_warning "TODO: deploy this demo's KubeVela Application (pending the product-catalog Application)"
-# The current kubevela/web-service.yaml is an nginx placeholder; the product-catalog
-# Application that uses the image built above is still to be added.
-# vela up -f $DEMO_DIR/kubevela/web-service-with-bucket.yaml
+# Submit the Application. Its multi-env workflow auto-deploys to dev (and runs the
+# functional API tests), then SUSPENDS for manual approval before staging and prod —
+# so this returns once dev is rolling. Resume later with:
+#   vela workflow resume product-catalog
+#vela up -f "$DEMO_DIR/kubevela/product-catalog.yaml"
+print_success "Application submitted (workflow deploys dev, then suspends for approval)"
 
 print_step "Phase 3: Verify"
 print_warning "TODO: check app status and exercise the running service"

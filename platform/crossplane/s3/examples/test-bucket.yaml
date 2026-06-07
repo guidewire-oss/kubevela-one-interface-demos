@@ -1,0 +1,31 @@
+# Standalone test for the S3 building blocks — apply this directly (bypassing
+# KubeVela) to verify the XRD + Composition + provider-aws-s3 +
+# function-patch-and-transform actually provision an S3 bucket.
+#
+# Prereqs (init.sh + setup.sh Phase 1 provide these):
+#   - Crossplane installed; provider-aws-s3 + function-patch-and-transform healthy
+#   - the XS3Bucket XRD + the s3-bucket Composition applied
+#   - a working AWS ProviderConfig + aws-credentials secret (real creds)
+#
+# Why no namespace / why spec.compositionRef (not spec.crossplane.compositionRef):
+# the XRD (definition.yaml) is apiextensions.crossplane.io/v1 with no claimNames,
+# so its scope is LegacyCluster → the XR is CLUSTER-SCOPED and selects its
+# Composition via the top-level spec.compositionRef.
+#
+# Try it:
+#   kubectl apply -f platform/crossplane/s3/examples/test-bucket.yaml
+#   kubectl get xs3buckets
+#   kubectl get bucket.s3.aws.upbound.io
+#   kubectl describe xs3bucket test-bucket          # events / sync status
+#   kubectl delete -f platform/crossplane/s3/examples/test-bucket.yaml
+apiVersion: platform.example.com/v1alpha1
+kind: XS3Bucket
+metadata:
+  name: test-bucket
+spec:
+  compositionRef:
+    name: s3-bucket.platform.example.com
+  # S3 bucket names are GLOBALLY unique — change this before applying.
+  name: kubevela-oneiface-test-bucket-0001
+  region: us-west-2
+  versioning: false

@@ -38,8 +38,8 @@ commands and the building blocks they exercise.
 
 | Beat | Uses |
 |------|------|
-| Declare an app, get HA for free | [`kubevela/web-service.yaml`](kubevela/web-service.yaml) + [`high-availability` trait](../../platform/kubevela/traits/high-availability/) |
-| Claim an **S3 bucket** from the same YAML — Crossplane then ACK | `../../platform/kubevela/components/` (`bucket`) + [`../../platform/crossplane/s3/`](../../platform/crossplane/s3/) (🚧) |
+| Declare an app + autoscaling + an S3 bucket in one YAML | [`kubevela/product-catalog.yaml`](kubevela/product-catalog.yaml) (`webservice` + `hpa` + `bucket` claim) |
+| The S3 bucket claim — Crossplane today, ACK later | `../../platform/kubevela/components/` (`bucket`) + [`../../platform/crossplane/s3/`](../../platform/crossplane/s3/) (🚧) |
 | Extend the interface in Go | [`../../defkit/`](../../defkit/) |
 
 > 🚧 Build order: (1) `bucket` component + Crossplane S3 composition, (2) ACK S3
