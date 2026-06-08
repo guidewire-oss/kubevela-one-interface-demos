@@ -21,11 +21,11 @@
 apiVersion: platform.example.com/v1alpha1
 kind: XS3Bucket
 metadata:
-  name: test-bucket
+  name: tenant-gokarna-test-bucket
 spec:
   compositionRef:
     name: s3-bucket.platform.example.com
   # S3 bucket names are GLOBALLY unique — change this before applying.
-  name: kubevela-oneiface-test-bucket-0001
+  name: tenant-gokarna-kv1-oneiface-test-bucket-0001
   region: us-west-2
   versioning: false

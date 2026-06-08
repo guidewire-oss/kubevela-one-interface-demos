@@ -18,7 +18,7 @@ spec:
           # Must match the `bucket` component's name below — the composition uses
           # the name as-is (no prefix), so this is the actual S3 bucket name.
           - name: S3_BUCKET_NAME
-            value: "product-catalog-images"
+            value: "tenant-gokarna-product-catalog-images"
           - name: AWS_REGION
             value: "us-west-2"
           - name: PORT
@@ -75,7 +75,7 @@ spec:
     - name: product-catalog-images
       type: bucket
       properties:
-        name: product-catalog-images
+        name: tenant-gokarna-product-catalog-images
         region: us-west-2
         versioning: false
 

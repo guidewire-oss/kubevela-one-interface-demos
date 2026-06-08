@@ -49,6 +49,8 @@ load_aws_env() {
 # AWS Credentials for Crossplane
 AWS_ACCESS_KEY_ID=your-access-key-id
 AWS_SECRET_ACCESS_KEY=your-secret-access-key
+# Required only for temporary credentials (SSO / STS / assumed roles); leave blank otherwise.
+AWS_SESSION_TOKEN=
 AWS_DEFAULT_REGION=us-west-2
 EOF
     print_success "Template created. Edit $env_file with your AWS credentials."
