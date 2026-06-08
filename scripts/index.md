@@ -44,6 +44,7 @@ example.
 | `apply-crossplane-provider.sh` | `apply_crossplane_provider` | Apply a provider manifest dir + wait installed/healthy |
 | `apply-crossplane-provider-config.sh` | `apply_crossplane_provider_config` | Apply a ProviderConfig manifest dir |
 | `install-kubevela.sh` | `install_kubevela` | `vela install` + wait, optional VelaUX |
+| `install-ack.sh` | `install_ack_controller` | Helm-install an ACK controller (OCI chart) wired to the AWS creds secret (Track 2) |
 
 ---
 
@@ -208,6 +209,33 @@ and background a port-forward to http://localhost:8000. **Requires:** `vela`, `k
 source scripts/install-kubevela.sh
 install_kubevela            # control plane only
 install_kubevela --velaux   # + VelaUX UI
+```
+
+## install-ack.sh — `install_ack_controller [service] [region] [namespace] [release] [secret_name] [chart_version]`
+
+Track 2 (KubeVela + ACK + S3). Helm-install/upgrade an ACK service controller from its
+public-ECR **OCI** chart (`oci://public.ecr.aws/aws-controllers-k8s/<service>-chart` — no
+`helm repo add` needed), wired to read AWS credentials from a mounted secret, then wait
+for the controller pod. The chart's defaults (`secretKey=credentials`, `profile=default`)
+match exactly what `create_aws_secret` produces, so the two compose directly.
+
+- **Args (all optional):** `service` (default `s3`); `region` (default
+  `$AWS_DEFAULT_REGION|$AWS_REGION|us-west-2`); `namespace` (default `$ACK_NAMESPACE|ack-system`);
+  `release` (default `ack-<service>-controller`); `secret_name` (default `aws-credentials`);
+  `chart_version` (default latest).
+- **Credentials:** if `create_aws_secret` is sourced, the function creates/refreshes the
+  secret in `namespace` from the exported `AWS_*` env (`load_aws_env`); otherwise the
+  namespace and secret must already exist. Sets `aws.region`, `aws.credentials.secretName`,
+  `aws.credentials.secretKey=credentials`, `aws.credentials.profile=default`.
+- **Requires:** `helm` (with OCI support), `kubectl`.
+
+```bash
+source scripts/load-aws-env.sh
+source scripts/create-aws-secret.sh
+source scripts/install-ack.sh
+load_aws_env "$DEMO_DIR/.env.aws"
+install_ack_controller                 # ACK S3 controller into ack-system
+install_ack_controller s3 us-east-1    # explicit service + region
 ```
 
 ---
