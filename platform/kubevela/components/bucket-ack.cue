@@ -1,11 +1,11 @@
 // Developer-facing S3 bucket claim — ACK backing (Track 2).
 //
-// This is the SAME `bucket` component as components/bucket.cue, but resolved by the
+// This is the SAME `bucket` component as components/bucket-xp.cue, but resolved by the
 // AWS Controllers for Kubernetes (ACK) S3 controller instead of a Crossplane
 // Composition. The developer-facing contract is byte-for-byte identical: same
 // component name (`bucket`) and same parameters (name / region / versioning), so the
 // demo Application (demos/<demo>/kubevela/product-catalog.yaml) needs NO change to
-// switch tracks. Apply exactly ONE of bucket.cue / bucket-ack.cue — both register a
+// switch tracks. Apply exactly ONE of bucket-xp.cue / bucket-ack.cue — both register a
 // ComponentDefinition named `bucket`; whichever is installed backs the claim.
 //
 // Where Crossplane fans a single XS3Bucket claim out into three managed resources
@@ -63,6 +63,10 @@ template: {
 			// Pin the regional S3 endpoint the controller talks to for THIS bucket,
 			// independent of the controller's default region.
 			annotations: "services.k8s.aws/region": parameter.region
+				// projectName has no functional role on AWS (S3 buckets have no "project");
+				// it exists only to keep the claim uniform with the KCC track, surfaced here
+				// as the standard "part-of" label so the value is at least visible/queryable.
+				labels: "app.kubernetes.io/part-of": parameter.projectName
 		}
 		spec: {
 			// S3 bucket name = claim name + namespace (globally unique per env) —
@@ -97,7 +101,7 @@ template: {
 		}
 	}
 
-	// IDENTICAL to components/bucket.cue — the developer contract must not differ
+	// IDENTICAL to components/bucket-xp.cue — the developer contract must not differ
 	// between the Crossplane and ACK backings.
 	parameter: {
 		// +usage=Name of the S3 bucket
@@ -108,5 +112,8 @@ template: {
 
 		// +usage=Enable versioning on the bucket
 		versioning: *false | bool
+
+		// +usage=Logical project this bucket belongs to (uniform across tracks; on AWS it only sets a label)
+		projectName: *"kubecon-in-2026" | string
 	}
 }

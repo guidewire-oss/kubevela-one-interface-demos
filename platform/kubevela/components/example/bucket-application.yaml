@@ -6,7 +6,7 @@
 #
 # THE WHOLE POINT — this file does NOT change between tracks. The `bucket`
 # component is resolved by whichever backing ComponentDefinition is installed:
-#   - bucket.cue      → Crossplane → AWS S3        (Track 1)
+#   - bucket-xp.cue      → Crossplane → AWS S3        (Track 1)
 #   - bucket-ack.cue  → AWS ACK    → AWS S3        (Track 2)
 #   - bucket-kcc.cue  → Config Connector → GCS     (Track 3)
 # Install exactly one backing (e.g. `vela def apply .../bucket-kcc.cue`, which

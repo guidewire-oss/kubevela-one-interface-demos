@@ -47,6 +47,10 @@ template: {
 			// and the S3 bucket name below must be globally unique.
 			name:      "\(parameter.name)-\(context.namespace)"
 			namespace: context.namespace
+			// projectName has no functional role on AWS (S3 buckets have no "project");
+			// it exists only to keep the claim uniform with the KCC track, surfaced here
+			// as the standard "part-of" label so the value is at least visible/queryable.
+			labels: "app.kubernetes.io/part-of": parameter.projectName
 		}
 		spec: {
 			// S3 bucket name = claim name + namespace (globally unique per env).
@@ -70,5 +74,8 @@ template: {
 
 		// +usage=Enable versioning on the bucket
 		versioning: *false | bool
+
+		// +usage=Logical project this bucket belongs to (uniform across tracks; on AWS it only sets a label)
+		projectName: *"kubecon-in-2026" | string
 	}
 }

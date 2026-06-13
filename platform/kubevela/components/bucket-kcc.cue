@@ -1,12 +1,12 @@
 // Developer-facing bucket claim — KCC backing (Track 3, GCP).
 //
-// This is the SAME `bucket` component as components/bucket.cue (Crossplane) and
+// This is the SAME `bucket` component as components/bucket-xp.cue (Crossplane) and
 // bucket-ack.cue (ACK), but resolved by Google Config Connector (KCC) into a GCS
 // StorageBucket instead of an AWS S3 bucket. The developer-facing contract is
 // byte-for-byte identical: same component name (`bucket`) and same parameters
 // (name / region / versioning), so the demo Application
 // (demos/<demo>/kubevela/product-catalog.yaml) needs NO change to switch CLOUDS.
-// Apply exactly ONE of bucket.cue / bucket-ack.cue / bucket-kcc.cue — all three
+// Apply exactly ONE of bucket-xp.cue / bucket-ack.cue / bucket-kcc.cue — all three
 // register a ComponentDefinition named `bucket`; whichever is installed backs the
 // claim. This track is the strongest "one interface" beat: the same claim crosses
 // not just backends but clouds (AWS → GCP).
@@ -111,10 +111,10 @@ template: {
 		}
 	}
 
-	// The name/region/versioning trio is IDENTICAL to components/bucket.cue and
-	// bucket-ack.cue. projectName is a KCC-only OPTIONAL extra: it has a default,
-	// so the shared developer YAML still applies unchanged across all three tracks
-	// (the AWS backings simply have no such field to set).
+	// IDENTICAL parameter surface across all three backings (bucket-xp.cue,
+	// bucket-ack.cue, bucket-kcc.cue): name / region / versioning / projectName.
+	// projectName is FUNCTIONAL here (it sets the GCP project-id annotation); on the
+	// AWS tracks it only sets a label — kept there purely for a uniform interface.
 	parameter: {
 		// +usage=Name of the S3 bucket
 		name: string

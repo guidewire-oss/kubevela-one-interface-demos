@@ -13,13 +13,17 @@ set -euo pipefail
 # in app namespaces) and Phase 2c (deploy the product-catalog Application) are wired.
 # Phase 3 (verify) is still a stub — mirrors setup.sh.
 
-DEMO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$DEMO_DIR/../.." && pwd)"
-# shellcheck source=../../scripts/common.sh
+# This script lives in aws-setup/. Its own state (.env.aws) is resolved via
+# SCRIPT_DIR; the SHARED Application (kubevela/product-catalog.yaml) lives in the
+# parent demo dir, so DEMO_DIR points there; REPO_ROOT is three levels up.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEMO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+# shellcheck source=../../../scripts/common.sh
 source "$REPO_ROOT/scripts/common.sh"
-# shellcheck source=../../scripts/load-aws-env.sh
+# shellcheck source=../../../scripts/load-aws-env.sh
 source "$REPO_ROOT/scripts/load-aws-env.sh"
-# shellcheck source=../../scripts/create-aws-secret.sh
+# shellcheck source=../../../scripts/create-aws-secret.sh
 source "$REPO_ROOT/scripts/create-aws-secret.sh"
 
 print_step "KubeVela: One Interface — platform setup (ACK track)"
@@ -28,7 +32,7 @@ print_step "Phase 1: Apply platform building blocks (the How)"
 # Apply the ACK backing of the developer-facing `bucket` ComponentDefinition. It
 # registers a definition ALSO named `bucket`, resolving the same claim to a single
 # ACK s3.services.k8s.aws Bucket (no XRD/Composition needed). Apply exactly one of
-# bucket.cue / bucket-ack.cue — whichever is installed backs the claim.
+# bucket-xp.cue / bucket-ack.cue — whichever is installed backs the claim.
 print_warning "Applying the 'bucket' ComponentDefinition (ACK backing, vela def apply)..."
 vela def apply "$REPO_ROOT/platform/kubevela/components/bucket-ack.cue"
 print_success "'bucket' ComponentDefinition (ACK) installed"
@@ -48,7 +52,7 @@ bash "$REPO_ROOT/apps/product-catalog/build-image.sh"
 #      separate process from init, so load .env.aws here to get AWS_* into the
 #      environment; then create the secret per namespace (creating it if absent).
 print_step "Phase 2b: Set up AWS credentials in app namespaces"
-load_aws_env "$DEMO_DIR/.env.aws"
+load_aws_env "$SCRIPT_DIR/.env.aws"
 for ns in dev staging prod; do
     create_aws_secret --create-namespace "$ns" aws-credentials
 done

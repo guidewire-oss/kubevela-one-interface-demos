@@ -26,7 +26,7 @@ print_step "Phase 1: Apply platform building blocks (the How)"
 # Apply the KCC backing of the developer-facing `bucket` ComponentDefinition. It
 # registers a definition ALSO named `bucket`, resolving the same claim to a single
 # storage.cnrm.cloud.google.com StorageBucket (no XRD/Composition needed). Apply
-# exactly one of bucket.cue / bucket-ack.cue / bucket-kcc.cue — whichever is
+# exactly one of bucket-xp.cue / bucket-ack.cue / bucket-kcc.cue — whichever is
 # installed backs the claim.
 print_warning "Applying the 'bucket' ComponentDefinition (KCC backing, vela def apply)..."
 vela def apply "$REPO_ROOT/platform/kubevela/components/bucket-kcc.cue"
