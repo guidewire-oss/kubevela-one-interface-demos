@@ -1,0 +1,50 @@
+# Standalone test for the KCC storage building block — apply this directly
+# (bypassing KubeVela) to verify the Config Connector operator + ConfigConnector
+# + gcp-key secret actually provision a real GCS bucket.
+#
+# This is the GCP analogue of platform/crossplane/s3/examples/test-bucket.yaml.
+# Unlike Crossplane (XRD + Composition + Function) there is no composition layer:
+# a GCS bucket is a single StorageBucket CR that folds versioning and public-access
+# settings inline — the same shape the bucket-kcc.cue component (to be added) will
+# emit. So this single file IS the resource.
+#
+# Prereqs (gcp-setup/init-with-kcc.sh provides these):
+#   - the Config Connector operator is installed and the cluster-mode
+#     ConfigConnector is healthy (kubectl get configconnector)
+#   - cnrm-controller-manager is Running in cnrm-system, using the gcp-key secret
+#   - the service account in that key has roles/storage.admin on the project below
+#
+# Project: set via the cnrm.cloud.google.com/project-id annotation below. You can
+# instead annotate the whole namespace once
+# (kubectl annotate namespace <ns> cnrm.cloud.google.com/project-id=<project>),
+# in which case the per-resource annotation is optional.
+#
+# Try it:
+#   kubectl apply -f platform/kcc/storage/examples/test-bucket.yaml
+#   kubectl get storagebucket
+#   kubectl describe storagebucket test-bucket          # events / Ready condition
+#   kubectl get storagebucket test-bucket -o jsonpath='{.status.url}{"\n"}'
+#   kubectl delete -f platform/kcc/storage/examples/test-bucket.yaml
+apiVersion: storage.cnrm.cloud.google.com/v1beta1
+kind: StorageBucket
+metadata:
+  # metadata.name doubles as the GCS bucket name (override with spec.resourceID if
+  # the K8s name and the GCS name must differ). GCS bucket names are GLOBALLY
+  # unique, 3–63 chars, lowercase — change this before applying.
+  name: tenant-gokarna-kv1-oneiface-test-bucket-0001
+  annotations:
+    cnrm.cloud.google.com/project-id: "kubecon-in-2026"
+spec:
+  # GCP location — a region (us-central1, us-west1, …) or a multi-region (US, EU).
+  # NB: GCP location names differ from AWS region names (no "us-west-2" here).
+  location: us-central1
+
+  # Versioning — KCC's boolean, the GCS-native equivalent of the claim's
+  # `versioning` flag (Crossplane/ACK map the same bool to Enabled/Suspended).
+  versioning:
+    enabled: false
+
+  # Block all public access — parity with the Crossplane BucketPublicAccessBlock
+  # and the ACK publicAccessBlock (all-true). On GCS this is two settings:
+  uniformBucketLevelAccess: true
+  publicAccessPrevention: enforced

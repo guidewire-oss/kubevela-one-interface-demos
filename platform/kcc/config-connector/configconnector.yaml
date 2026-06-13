@@ -1,0 +1,30 @@
+# Cluster-mode ConfigConnector — the KCC analogue of Crossplane's ProviderConfig.
+#
+# This is the credential-wiring object: it tells the Config Connector operator to
+# run a single, cluster-wide controller that authenticates to GCP with the
+# service-account key in the `credentialSecretName` secret (data key `key.json`).
+#
+# This file is the SOURCE OF TRUTH for the ConfigConnector CR: the bootstrap path
+# (demos/kubecon-in-2026/gcp-setup/init-with-kcc.sh) passes it to install_kcc,
+# which applies it with `kubectl apply -f`. `scripts/install-kcc.sh` also carries
+# an equivalent inline CR, but that is only a self-contained fallback used when no
+# manifest path is provided — keep this file and that inline copy in sync.
+#
+# Prereqs before applying:
+#   - the Config Connector operator is installed (configconnector-operator-system)
+#   - a `gcp-key` secret exists in cnrm-system, data key `key.json` = an SA JSON key
+#     (scripts/create-gcp-secret.sh builds exactly this)
+#
+# The name is FIXED by KCC — the cluster-scoped singleton must be named
+# `configconnector.core.cnrm.cloud.google.com`.
+#
+#   kubectl apply -f platform/kcc/config-connector/configconnector.yaml
+#   kubectl get configconnector -o jsonpath='{.items[0].status.healthy}{"\n"}'
+#   kubectl get pods -n cnrm-system
+apiVersion: core.cnrm.cloud.google.com/v1beta1
+kind: ConfigConnector
+metadata:
+  name: configconnector.core.cnrm.cloud.google.com
+spec:
+  mode: cluster
+  credentialSecretName: gcp-key

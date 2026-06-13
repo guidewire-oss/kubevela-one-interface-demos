@@ -56,15 +56,16 @@ template: {
 		apiVersion: "s3.services.k8s.aws/v1alpha1"
 		kind:       "Bucket"
 		metadata: {
-			name:      parameter.name
+			name:      "\(parameter.name)-\(context.namespace)"
 			namespace: context.namespace
 			// Pin the regional S3 endpoint the controller talks to for THIS bucket,
 			// independent of the controller's default region.
 			annotations: "services.k8s.aws/region": parameter.region
 		}
 		spec: {
-			// Bucket name = the claim's name (no prefix) — same as the Crossplane track.
-			name: parameter.name
+			// S3 bucket name = claim name + namespace (globally unique per env) —
+			// matches the metadata name above and the Crossplane/KCC tracks.
+			name: "\(parameter.name)-\(context.namespace)"
 
 			// S3 only accepts (and requires) a LocationConstraint for regions other
 			// than us-east-1; for us-east-1 it must be omitted.

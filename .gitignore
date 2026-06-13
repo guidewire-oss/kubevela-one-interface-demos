@@ -5,6 +5,10 @@
 .env.*
 *.tfvars
 
+# GCP 
+
+gcp-key.json
+
 # Kubeconfig files (contain private keys — never commit)
 kubeconfig*
 kubeconfig-*

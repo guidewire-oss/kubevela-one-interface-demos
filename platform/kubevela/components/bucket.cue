@@ -42,11 +42,15 @@ template: {
 		apiVersion: "platform.example.com/v1alpha1"
 		kind:       "XS3Bucket"
 		metadata: {
-			name:      parameter.name
+			// Append the namespace so the SAME claim across dev/staging/prod yields
+			// distinct names — the XR is cluster-scoped (must be unique cluster-wide)
+			// and the S3 bucket name below must be globally unique.
+			name:      "\(parameter.name)-\(context.namespace)"
 			namespace: context.namespace
 		}
 		spec: {
-			name:       parameter.name
+			// S3 bucket name = claim name + namespace (globally unique per env).
+			name:       "\(parameter.name)-\(context.namespace)"
 			region:     parameter.region
 			versioning: parameter.versioning
 			crossplane: {

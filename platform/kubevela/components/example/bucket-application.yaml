@@ -1,0 +1,46 @@
+# Minimal example: a KubeVela Application that claims nothing but a bucket.
+#
+# This is the developer-facing "What" in its smallest form — a single `bucket`
+# component, no traits, no policies, no workflow. It exists to show the claim on
+# its own, decoupled from the product-catalog demo Application.
+#
+# THE WHOLE POINT — this file does NOT change between tracks. The `bucket`
+# component is resolved by whichever backing ComponentDefinition is installed:
+#   - bucket.cue      → Crossplane → AWS S3        (Track 1)
+#   - bucket-ack.cue  → AWS ACK    → AWS S3        (Track 2)
+#   - bucket-kcc.cue  → Config Connector → GCS     (Track 3)
+# Install exactly one backing (e.g. `vela def apply .../bucket-kcc.cue`, which
+# setup-with-kcc.sh Phase 1 does) and apply this same file — the bucket lands on
+# whichever cloud that backing targets. "One interface to rule them all."
+#
+# Prereqs: a cluster with KubeVela + one `bucket` backing installed, plus that
+# backing's credentials/orchestrator (e.g. gcp-setup/init-with-kcc.sh for KCC).
+# For the KCC track, the bucket is created in the project from bucket-kcc.cue's
+# projectName parameter (default kubecon-in-2026). To target a different project,
+# set it on the claim — `properties: { projectName: <project> }` below — no
+# namespace annotation needed.
+#
+# Try it:
+#   vela up -f platform/kubevela/components/example/bucket-application.yaml
+#   vela status bucket-example
+#   # then, per the installed backing:
+#   kubectl get xs3buckets                          # Crossplane
+#   kubectl get buckets.s3.services.k8s.aws -A      # ACK
+#   kubectl get storagebucket -A                    # KCC
+#   vela delete bucket-example
+apiVersion: core.oam.dev/v1beta1
+kind: Application
+metadata:
+  name: bucket-example
+spec:
+  components:
+    - name: example-bucket
+      type: bucket
+      properties:
+        # Object-storage bucket names are GLOBALLY unique — change this before
+        # applying. Lowercase, 3–63 chars (valid for S3 and GCS alike).
+        name: my-oneiface-example-bucket-0001
+        # An AWS region name. The KCC backing maps it to the nearest GCP location
+        # (us-west-2 → us-west1); the S3 backings use it directly.
+        region: us-central1
+        versioning: false
