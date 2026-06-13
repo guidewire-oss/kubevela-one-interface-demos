@@ -87,10 +87,18 @@ template: {
 			// global name.
 			name:      "\(parameter.name)-\(context.namespace)"
 			namespace: context.namespace
-			// The GCP project this bucket is created in, driven by the projectName
-			// parameter (default kubecon-in-2026). Set here per-resource, so no
-			// namespace-level project annotation is required.
-			annotations: "cnrm.cloud.google.com/project-id": parameter.projectName
+			annotations: {
+				// The GCP project this bucket is created in, driven by the projectName
+				// parameter (default kubecon-in-2026). Set here per-resource, so no
+				// namespace-level project annotation is required.
+				"cnrm.cloud.google.com/project-id": parameter.projectName
+				// Empty the bucket before deleting it on teardown. GCS (like S3) refuses to
+				// delete a non-empty bucket, so without this, deleting the Application leaves
+				// the StorageBucket stuck ("...containing objects without force_destroy set
+				// to true"). This is the GCS analogue of the Crossplane composition's
+				// forceDestroy:true — demo convenience; reconsider for buckets with real data.
+				"cnrm.cloud.google.com/force-destroy": "true"
+			}
 		}
 		spec: {
 			// region → location, translated AWS→GCP (see _awsToGcpLocation above).
