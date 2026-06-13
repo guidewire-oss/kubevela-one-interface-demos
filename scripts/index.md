@@ -48,6 +48,7 @@ example.
 | `load-gcp-env.sh` | `load_gcp_env` | Source `.env.gcp` (export GCP project + key path) or write a template |
 | `create-gcp-secret.sh` | `create_gcp_secret` | Build the `gcp-key` k8s secret (data key `key.json`) from a service-account key file |
 | `install-kcc.sh` | `install_kcc` | Apply the Config Connector operator + cluster-mode `ConfigConnector` wired to the `gcp-key` secret (Track 3) |
+| `empty-s3-bucket.sh` | `empty_s3_bucket` | Empty an S3 bucket (objects + versions) so it can be deleted — ACK teardown helper (ACK has no force-destroy) |
 
 ---
 
@@ -300,6 +301,29 @@ source scripts/install-kcc.sh
 load_gcp_env "$DEMO_DIR/.env.gcp"
 install_kcc                                                            # inline ConfigConnector CR
 install_kcc gcp-key latest "$REPO_ROOT/platform/kcc/config-connector/configconnector.yaml"
+```
+
+## empty-s3-bucket.sh — `empty_s3_bucket <bucket_name>`
+
+Delete every object in an S3 bucket (current objects + versions + delete markers) so the
+bucket can be deleted. The ACK S3 controller calls `DeleteBucket` directly and has **no
+force-destroy** — unlike Crossplane (`forceDestroy: true`) and KCC
+(`cnrm.cloud.google.com/force-destroy` annotation) — so a non-empty bucket blocks ACK
+teardown. Empty it with this helper first, then delete the CR/Application.
+
+- **Args:** `bucket_name` (required).
+- **Reads:** `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` [/ `AWS_SESSION_TOKEN`] (exported by
+  `load_aws_env`; the aws CLI picks them up). **Requires:** the `aws` CLI.
+- **Behaviour:** no-op (returns 0) if the bucket is absent/inaccessible; otherwise removes all
+  objects, then purges versions + delete markers (builds the delete payload via `--query`, no jq).
+- Wired into `demos/kubecon-in-2026/aws-setup/teardown-with-ack.sh`, which discovers the live ACK
+  bucket names (`kubectl get buckets.s3.services.k8s.aws`) and empties each before `vela delete`.
+
+```bash
+source scripts/load-aws-env.sh
+source scripts/empty-s3-bucket.sh
+load_aws_env "$DEMO_DIR/.env.aws"
+empty_s3_bucket my-bucket-dev
 ```
 
 ---
