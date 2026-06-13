@@ -61,7 +61,7 @@ print_step "Phase 2c: Deploy the application"
 # functional API tests), then SUSPENDS for manual approval before staging and prod —
 # so this returns once dev is rolling. Resume later with:
 #   vela workflow resume product-catalog
-#vela up -f "$DEMO_DIR/kubevela/product-catalog.yaml"
+vela up -f "$DEMO_DIR/kubevela/product-catalog.yaml"
 print_success "Application submitted (workflow deploys dev, then suspends for approval)"
 
 print_step "Phase 3: Verify"

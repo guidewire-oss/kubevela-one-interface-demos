@@ -56,6 +56,8 @@ template: {
 		apiVersion: "s3.services.k8s.aws/v1alpha1"
 		kind:       "Bucket"
 		metadata: {
+			// Append the namespace so the SAME claim across dev/staging/prod yields
+			// distinct, globally-unique S3 bucket names instead of colliding.
 			name:      "\(parameter.name)-\(context.namespace)"
 			namespace: context.namespace
 			// Pin the regional S3 endpoint the controller talks to for THIS bucket,

@@ -15,10 +15,9 @@ spec:
           - port: 8080
             expose: true
         env:
-          # Must match the `bucket` component's name below — the composition uses
-          # the name as-is (no prefix), so this is the actual S3 bucket name.
-          - name: S3_BUCKET_NAME
-            value: "tenant-gokarna-product-catalog-images"
+          # S3_BUCKET_NAME is intentionally NOT set here: the actual bucket name is
+          # namespace-suffixed (…-dev/-staging/-prod), so it is set per environment by
+          # the override-<env> policies below.
           - name: AWS_REGION
             value: "us-west-2"
           - name: PORT
@@ -69,9 +68,10 @@ spec:
               cpu: "500m"
               memory: "256Mi"
 
-    # S3 Bucket Component (claim → Crossplane Composition)
-    # NOTE: S3 bucket names are GLOBALLY unique. There is no prefix anymore, so this
-    # name is the literal bucket name — change it to something unique for a real run.
+    # Bucket Component (claim → Crossplane / ACK / KCC backing)
+    # NOTE: bucket names are GLOBALLY unique. The backing ComponentDefinition appends
+    # the deploy namespace to this name (…-dev/-staging/-prod), so each environment gets
+    # a distinct bucket — change this base name to something unique for a real run.
     - name: product-catalog-images
       type: bucket
       properties:
@@ -108,6 +108,19 @@ spec:
       properties:
         components:
           - name: product-catalog-api
+            # Point the app at THIS env's bucket. The `bucket` component appends the
+            # namespace, so dev's bucket is …-dev. Overriding `env` replaces the whole
+            # list, so the other env vars are repeated here.
+            properties:
+              env:
+                - name: S3_BUCKET_NAME
+                  value: "tenant-gokarna-product-catalog-images-dev"
+                - name: AWS_REGION
+                  value: "us-west-2"
+                - name: PORT
+                  value: "8080"
+                - name: AWS_SHARED_CREDENTIALS_FILE
+                  value: "/aws/credentials"
             traits:
               - type: hpa
                 properties:
@@ -119,6 +132,16 @@ spec:
       properties:
         components:
           - name: product-catalog-api
+            properties:
+              env:
+                - name: S3_BUCKET_NAME
+                  value: "tenant-gokarna-product-catalog-images-staging"
+                - name: AWS_REGION
+                  value: "us-west-2"
+                - name: PORT
+                  value: "8080"
+                - name: AWS_SHARED_CREDENTIALS_FILE
+                  value: "/aws/credentials"
             traits:
               - type: hpa
                 properties:
@@ -130,6 +153,16 @@ spec:
       properties:
         components:
           - name: product-catalog-api
+            properties:
+              env:
+                - name: S3_BUCKET_NAME
+                  value: "tenant-gokarna-product-catalog-images-prod"
+                - name: AWS_REGION
+                  value: "us-west-2"
+                - name: PORT
+                  value: "8080"
+                - name: AWS_SHARED_CREDENTIALS_FILE
+                  value: "/aws/credentials"
             traits:
               - type: hpa
                 properties:

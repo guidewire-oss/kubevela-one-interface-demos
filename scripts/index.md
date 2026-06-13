@@ -45,6 +45,9 @@ example.
 | `apply-crossplane-provider-config.sh` | `apply_crossplane_provider_config` | Apply a ProviderConfig manifest dir |
 | `install-kubevela.sh` | `install_kubevela` | `vela install` + wait, optional VelaUX |
 | `install-ack.sh` | `install_ack_controller` | Helm-install an ACK controller (OCI chart) wired to the AWS creds secret (Track 2) |
+| `load-gcp-env.sh` | `load_gcp_env` | Source `.env.gcp` (export GCP project + key path) or write a template |
+| `create-gcp-secret.sh` | `create_gcp_secret` | Build the `gcp-key` k8s secret (data key `key.json`) from a service-account key file |
+| `install-kcc.sh` | `install_kcc` | Apply the Config Connector operator + cluster-mode `ConfigConnector` wired to the `gcp-key` secret (Track 3) |
 
 ---
 
@@ -238,6 +241,67 @@ install_ack_controller                 # ACK S3 controller into ack-system
 install_ack_controller s3 us-east-1    # explicit service + region
 ```
 
+## load-gcp-env.sh — `load_gcp_env [--skip] [env_file]`
+
+The GCP/KCC analogue of `load_aws_env`. Find `.env.gcp`: source it (auto-exporting
+`GOOGLE_*`/`GCP_*`) if present, else write a template.
+
+- **Args:** `--skip` (optional) anywhere; `env_file` (optional, default `.env.gcp`).
+- **Returns:** present → source + export, `0`. Missing + `--skip` → write template, `0`
+  (caller continues). Missing, no `--skip` → write template, **`1`** (caller stops).
+- **Template fields:** `GOOGLE_PROJECT_ID`, `GOOGLE_APPLICATION_CREDENTIALS` (path to a
+  service-account JSON key), `GOOGLE_REGION`. Unlike AWS (inline key+secret), GCP auth
+  is a key *file*, so the env file carries its path; warns early if that path is missing.
+
+```bash
+source scripts/load-gcp-env.sh
+load_gcp_env "$DEMO_DIR/.env.gcp"          # stop if creds missing
+load_gcp_env --skip "$DEMO_DIR/.env.gcp"   # continue without creds
+```
+
+## create-gcp-secret.sh — `create_gcp_secret [--create-namespace] [namespace] [secret_name]`
+
+Read the service-account JSON key at `GOOGLE_APPLICATION_CREDENTIALS` and apply it as a
+generic k8s secret under data key **`key.json`** — the name KCC's controller reads
+(mounted at `/var/secrets/google/key.json`). The GCP analogue of `create_aws_secret`.
+
+- **Args:** `--create-namespace` (optional); `namespace` (default `$KCC_NAMESPACE|cnrm-system`);
+  `secret_name` (default `gcp-key`, matching KCC's `spec.credentialSecretName` convention).
+- **Reads:** `GOOGLE_APPLICATION_CREDENTIALS` (e.g. exported by `load_gcp_env`). Errors if
+  it is unset **or** the file is missing.
+- **Namespace:** missing + `--create-namespace` → create it; missing without the flag →
+  error. **Requires:** `kubectl`.
+
+```bash
+source scripts/create-gcp-secret.sh
+create_gcp_secret                              # gcp-key in cnrm-system
+create_gcp_secret --create-namespace my-ns my-key
+```
+
+## install-kcc.sh — `install_kcc [secret_name] [version] [configconnector_manifest]`
+
+Track 3 (KubeVela + KCC + GCS). Download + `kubectl apply` the Config Connector operator
+release bundle (a YAML bundle from the public GCS bucket — **not** Helm), wait for the
+operator, ensure the `gcp-key` secret exists in `cnrm-system`, apply a cluster-mode
+`ConfigConnector`, then wait for `cnrm-controller-manager`.
+
+- **Args (all optional):** `secret_name` (default `gcp-key`); `version` (default `latest`,
+  the release-bundle channel); `configconnector_manifest` (path — applied with
+  `kubectl apply -f` if given; otherwise an equivalent CR is applied inline).
+- **Credentials:** if `create_gcp_secret` is sourced, the function creates/refreshes the
+  secret in `cnrm-system` from `GOOGLE_APPLICATION_CREDENTIALS` (`load_gcp_env`); otherwise
+  the secret must already exist there.
+- **Requires:** `kubectl`, `curl`, `tar`.
+
+```bash
+source scripts/load-gcp-env.sh
+source scripts/create-gcp-secret.sh
+source scripts/install-kcc.sh
+load_gcp_env "$DEMO_DIR/.env.gcp"
+install_kcc                                                            # inline ConfigConnector CR
+install_kcc gcp-key latest "$REPO_ROOT/platform/kcc/config-connector/configconnector.yaml"
+```
+
 ---
 
 ## Putting it together (a full bootstrap)
@@ -269,5 +333,23 @@ create_aws_secret "$CROSSPLANE_NAMESPACE" aws-credentials
 apply_crossplane_function "$REPO_ROOT/platform/crossplane/function"
 apply_crossplane_provider "$REPO_ROOT/platform/crossplane/provider"
 apply_crossplane_provider_config "$REPO_ROOT/platform/crossplane/provider-config"
+install_kubevela --velaux
+```
+
+### Track 3 variant (KCC instead of Crossplane)
+
+`demos/kubecon-in-2026/gcp-setup/init-with-kcc.sh` swaps the cloud-orchestrator phase:
+same `create_cluster` + `install_kubevela`, but the Crossplane install/function/provider
+chain is replaced by a single `install_kcc`, and `load_aws_env`/`create_aws_secret` become
+their GCP counterparts.
+
+```bash
+source "$REPO_ROOT/scripts/load-gcp-env.sh"
+source "$REPO_ROOT/scripts/create-gcp-secret.sh"
+source "$REPO_ROOT/scripts/install-kcc.sh"
+
+create_cluster
+load_gcp_env "$DEMO_DIR/.env.gcp"             # export GCP project + key path (or stop)
+install_kcc gcp-key latest "$REPO_ROOT/platform/kcc/config-connector/configconnector.yaml"
 install_kubevela --velaux
 ```
