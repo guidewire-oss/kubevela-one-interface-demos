@@ -10,13 +10,17 @@ set -euo pipefail
 # (build image), Phase 2b (AWS creds in app namespaces) and Phase 2c (deploy the
 # product-catalog Application) are all wired. Phase 3 (verify) is still a stub.
 
-DEMO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$DEMO_DIR/../.." && pwd)"
-# shellcheck source=../../scripts/common.sh
+# This script lives in aws-setup/. Its own state (.env.aws) is resolved via
+# SCRIPT_DIR; the SHARED Application (kubevela/product-catalog.yaml) lives in the
+# parent demo dir, so DEMO_DIR points there; REPO_ROOT is three levels up.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEMO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+# shellcheck source=../../../scripts/common.sh
 source "$REPO_ROOT/scripts/common.sh"
-# shellcheck source=../../scripts/load-aws-env.sh
+# shellcheck source=../../../scripts/load-aws-env.sh
 source "$REPO_ROOT/scripts/load-aws-env.sh"
-# shellcheck source=../../scripts/create-aws-secret.sh
+# shellcheck source=../../../scripts/create-aws-secret.sh
 source "$REPO_ROOT/scripts/create-aws-secret.sh"
 
 print_step "KubeVela: One Interface — platform + app setup"
@@ -53,7 +57,7 @@ bash "$REPO_ROOT/apps/product-catalog/build-image.sh"
 #      .env.aws here to get AWS_* into the environment; then create the secret per
 #      namespace (creating the namespace if it doesn't exist).
 print_step "Phase 2b: Set up AWS credentials in app namespaces"
-load_aws_env "$DEMO_DIR/.env.aws"
+load_aws_env "$SCRIPT_DIR/.env.aws"
 for ns in dev staging prod; do
     create_aws_secret --create-namespace "$ns" aws-credentials
 done
