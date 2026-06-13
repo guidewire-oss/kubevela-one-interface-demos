@@ -1,3 +1,15 @@
+# Product Catalog Application — GCP / KCC track variant.
+#
+# This is the SAME developer Application as kubevela/product-catalog.yaml, deployed
+# on the GCP track (KCC). It is INTENTIONALLY structurally identical — same
+# components, traits, policies, workflow, and an IDENTICAL `bucket` claim — so that
+# `diff product-catalog.yaml product-catalog-gcp.yaml` shows exactly the cloud
+# delta and nothing else. The only differences are the webservice's cloud-runtime
+# config (the app is cloud-neutral; see apps/product-catalog/storage.py):
+#   - STORAGE_PROVIDER: aws → gcp
+#   - AWS_REGION + AWS_SHARED_CREDENTIALS_FILE  →  GOOGLE_CLOUD_PROJECT + GOOGLE_APPLICATION_CREDENTIALS
+#   - mounted secret: aws-credentials (/aws)  →  gcp-key (/gcp, data key key.json)
+# The `bucket` claim, image, ports, probes, traits, topology, and workflow are unchanged.
 apiVersion: core.oam.dev/v1beta1
 kind: Application
 metadata:
@@ -18,20 +30,22 @@ spec:
           # BUCKET_NAME is intentionally NOT set here: the actual bucket name is
           # namespace-suffixed (…-dev/-staging/-prod), so it is set per environment by
           # the override-<env> policies below. STORAGE_PROVIDER tells the (cloud-neutral)
-          # app which backend to use — "aws" here; the GCP variant sets "gcp".
+          # app which backend to use — "gcp" here; the AWS variant sets "aws".
           - name: STORAGE_PROVIDER
-            value: "aws"
-          - name: AWS_REGION
-            value: "us-west-2"
+            value: "gcp"
+          - name: GOOGLE_CLOUD_PROJECT
+            value: "kubecon-in-2026"
           - name: PORT
             value: "8080"
-          - name: AWS_SHARED_CREDENTIALS_FILE
-            value: "/aws/credentials"
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: "/gcp/key.json"
         volumeMounts:
           secret:
-            - name: aws-credentials
-              mountPath: /aws
-              secretName: aws-credentials
+            # The gcp-key secret carries the service-account JSON under data key
+            # `key.json`, so it mounts to /gcp/key.json (matches GOOGLE_APPLICATION_CREDENTIALS).
+            - name: gcp-key
+              mountPath: /gcp
+              secretName: gcp-key
         livenessProbe:
           httpGet:
             path: /health
@@ -72,9 +86,9 @@ spec:
               memory: "256Mi"
 
     # Bucket Component (claim → Crossplane / ACK / KCC backing)
-    # NOTE: bucket names are GLOBALLY unique. The backing ComponentDefinition appends
-    # the deploy namespace to this name (…-dev/-staging/-prod), so each environment gets
-    # a distinct bucket — change this base name to something unique for a real run.
+    # IDENTICAL to product-catalog.yaml — this is the one-interface artifact. On this
+    # track the `bucket` claim is resolved by bucket-kcc.cue into a GCS StorageBucket
+    # (named …-<namespace>); the developer YAML below does not change between clouds.
     - name: product-catalog-images
       type: bucket
       properties:
@@ -119,13 +133,13 @@ spec:
                 - name: BUCKET_NAME
                   value: "tenant-gokarna-product-catalog-images-dev"
                 - name: STORAGE_PROVIDER
-                  value: "aws"
-                - name: AWS_REGION
-                  value: "us-west-2"
+                  value: "gcp"
+                - name: GOOGLE_CLOUD_PROJECT
+                  value: "kubecon-in-2026"
                 - name: PORT
                   value: "8080"
-                - name: AWS_SHARED_CREDENTIALS_FILE
-                  value: "/aws/credentials"
+                - name: GOOGLE_APPLICATION_CREDENTIALS
+                  value: "/gcp/key.json"
             traits:
               - type: hpa
                 properties:
@@ -142,13 +156,13 @@ spec:
                 - name: BUCKET_NAME
                   value: "tenant-gokarna-product-catalog-images-staging"
                 - name: STORAGE_PROVIDER
-                  value: "aws"
-                - name: AWS_REGION
-                  value: "us-west-2"
+                  value: "gcp"
+                - name: GOOGLE_CLOUD_PROJECT
+                  value: "kubecon-in-2026"
                 - name: PORT
                   value: "8080"
-                - name: AWS_SHARED_CREDENTIALS_FILE
-                  value: "/aws/credentials"
+                - name: GOOGLE_APPLICATION_CREDENTIALS
+                  value: "/gcp/key.json"
             traits:
               - type: hpa
                 properties:
@@ -165,13 +179,13 @@ spec:
                 - name: BUCKET_NAME
                   value: "tenant-gokarna-product-catalog-images-prod"
                 - name: STORAGE_PROVIDER
-                  value: "aws"
-                - name: AWS_REGION
-                  value: "us-west-2"
+                  value: "gcp"
+                - name: GOOGLE_CLOUD_PROJECT
+                  value: "kubecon-in-2026"
                 - name: PORT
                   value: "8080"
-                - name: AWS_SHARED_CREDENTIALS_FILE
-                  value: "/aws/credentials"
+                - name: GOOGLE_APPLICATION_CREDENTIALS
+                  value: "/gcp/key.json"
             traits:
               - type: hpa
                 properties:

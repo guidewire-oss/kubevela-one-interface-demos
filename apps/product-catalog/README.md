@@ -2,35 +2,91 @@
 
 > ⚠️ **Under construction** — this repository is a work in progress; content is incomplete and may change.
 
-A simple Flask-based REST API that demonstrates S3 integration for storing product images.
+A simple Flask-based REST API that stores product metadata and images in an
+**object-storage bucket** — on **either AWS S3 or GCP Cloud Storage**, chosen at
+runtime. The API code is cloud-neutral: it talks to the `ObjectStore` abstraction
+in [`storage.py`](storage.py), never to a cloud SDK directly. Swapping clouds is a
+config change (`STORAGE_PROVIDER`), not a code change — the "one interface" promise
+applied to the application tier.
 
 ## Features
 
 - **GET /health** - Health check endpoint
-- **GET /ready** - Readiness check (verifies S3 bucket access)
+- **GET /ready** - Readiness check (verifies the storage bucket is accessible)
 - **GET /products** - List all products
-- **POST /products** - Create a new product with optional image upload to S3
-- **GET /products/{id}** - Get a specific product with S3 presigned URL for image
-- **DELETE /products/{id}** - Delete a product and its S3 image
+- **POST /products** - Create a new product with optional image upload
+- **GET /products/{id}** - Get a specific product with a signed URL for its image
+- **DELETE /products/{id}** - Delete a product and its stored image
+
+## How the cloud-neutral storage works
+
+```
+            ┌─────────────┐
+ request ──▶│  Flask API  │  (app.py — no cloud SDK imports)
+            └──────┬──────┘
+                   │  ObjectStore interface (storage.py)
+        ┌──────────┴──────────┐
+        ▼                     ▼
+ ┌─────────────┐       ┌─────────────┐
+ │ S3ObjectStore│      │GcsObjectStore│   ← chosen by STORAGE_PROVIDER
+ │   (boto3)    │      │(google-cloud)│
+ └──────┬───────┘      └──────┬───────┘
+        ▼                     ▼
+   AWS S3 bucket         GCP GCS bucket
+```
+
+`STORAGE_PROVIDER=aws` → S3 (boto3); `STORAGE_PROVIDER=gcp` → Cloud Storage
+(google-cloud-storage). Both SDKs ship in the image; only the env var decides which
+is used. Object keys, the REST contract, and every handler are identical across
+clouds.
+
+## Environment Variables
+
+| Variable | Applies to | Purpose | Default |
+|----------|-----------|---------|---------|
+| `STORAGE_PROVIDER` | both | `aws` or `gcp` — selects the backend | `aws` |
+| `BUCKET_NAME` | both | the bucket to use (cloud-neutral) | `product-catalog-images` |
+| `PORT` | both | port to listen on | `8080` |
+| `AWS_REGION` | aws | S3 client region | `us-west-2` |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_SHARED_CREDENTIALS_FILE` | aws | boto3 credentials | — |
+| `GOOGLE_CLOUD_PROJECT` | gcp | GCP project id (falls back to `GOOGLE_PROJECT_ID`) | — |
+| `GOOGLE_APPLICATION_CREDENTIALS` | gcp | path to a service-account JSON key (also needed for signed URLs) | — |
+
+> `BUCKET_NAME` is the unified, cloud-neutral name. For backward compatibility the
+> app still reads the legacy `S3_BUCKET_NAME` if `BUCKET_NAME` is unset.
 
 ## Local Development
 
+### AWS S3
+
 ```bash
-# Install dependencies
 pip install -r requirements.txt
 
-# Set environment variables
-export S3_BUCKET_NAME=tenant-atlantis-product-images
+export STORAGE_PROVIDER=aws
+export BUCKET_NAME=my-product-images
 export AWS_REGION=us-west-2
 export AWS_ACCESS_KEY_ID=your_access_key
 export AWS_SECRET_ACCESS_KEY=your_secret_key
 
-# Run the application
 python app.py
-
-# Test the API
 ./test_api.sh
 ```
+
+### GCP Cloud Storage
+
+```bash
+pip install -r requirements.txt
+
+export STORAGE_PROVIDER=gcp
+export BUCKET_NAME=my-product-images
+export GOOGLE_CLOUD_PROJECT=my-gcp-project
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json
+
+python app.py
+./test_api.sh
+```
+
+The REST contract (and `test_api.sh`) is the same regardless of provider.
 
 ## Build & push the image (for the demo)
 
@@ -53,41 +109,25 @@ KubeVela `Application`:
 
 ```bash
 docker build -t product-catalog:v1.0.0 .
+
+# AWS
 docker run -p 8080:8080 \
-  -e S3_BUCKET_NAME=your-bucket \
-  -e AWS_REGION=us-west-2 \
-  -e AWS_ACCESS_KEY_ID=your_access_key \
-  -e AWS_SECRET_ACCESS_KEY=your_secret_key \
+  -e STORAGE_PROVIDER=aws -e BUCKET_NAME=your-bucket -e AWS_REGION=us-west-2 \
+  -e AWS_ACCESS_KEY_ID=your_access_key -e AWS_SECRET_ACCESS_KEY=your_secret_key \
   product-catalog:v1.0.0
-```
 
-## Environment Variables
-
-- `S3_BUCKET_NAME` - S3 bucket name for storing product images (default: tenant-atlantis-product-images)
-- `AWS_REGION` - AWS region (default: us-west-2)
-- `AWS_ACCESS_KEY_ID` - AWS access key (for authentication)
-- `AWS_SECRET_ACCESS_KEY` - AWS secret key (for authentication)
-- `PORT` - Port to run the application on (default: 8080)
-
-## Architecture
-
-```
-┌─────────────┐         ┌─────────────┐         ┌─────────────┐
-│   Client    │────────▶│  Flask API  │────────▶│  AWS S3     │
-│             │         │             │         │   Bucket    │
-└─────────────┘         └─────────────┘         └─────────────┘
-                              │
-                              │
-                              ▼
-                        ┌─────────────┐
-                        │  In-Memory  │
-                        │   Storage   │
-                        └─────────────┘
+# GCP
+docker run -p 8080:8080 \
+  -e STORAGE_PROVIDER=gcp -e BUCKET_NAME=your-bucket \
+  -e GOOGLE_CLOUD_PROJECT=your-project \
+  -e GOOGLE_APPLICATION_CREDENTIALS=/secrets/key.json \
+  -v /path/to/key.json:/secrets/key.json:ro \
+  product-catalog:v1.0.0
 ```
 
 ## Security Features
 
 - Non-root user in Docker container
 - Read-only root filesystem compatible
-- Presigned URLs for secure S3 access
-- IAM role-based authentication (when using IRSA in Kubernetes)
+- Signed URLs for secure, time-limited object access (S3 presigned / GCS v4 signed)
+- IAM role-based authentication when available (IRSA on AWS, Workload Identity on GCP)

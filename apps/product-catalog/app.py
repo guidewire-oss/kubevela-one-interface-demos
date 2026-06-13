@@ -1,24 +1,25 @@
 #!/usr/bin/env python3
 """
-Product Catalog API - Flask application with S3 integration
-Demonstrates a simple microservice that stores product images in S3
+Product Catalog API — a cloud-neutral Flask microservice.
+
+Stores product metadata and images in an object-storage bucket. The bucket can be
+AWS S3 or GCP Cloud Storage, selected at runtime by STORAGE_PROVIDER, via the
+ObjectStore abstraction in storage.py. Every request handler below is identical
+for both clouds — the "one interface" promise applied to the application tier.
 """
 import os
 import json
 import uuid
 from datetime import datetime
 from flask import Flask, request, jsonify
-import boto3
-from botocore.exceptions import ClientError, NoCredentialsError
+
+from storage import build_object_store, StorageError
 
 app = Flask(__name__)
 
-# Configuration
-S3_BUCKET = os.environ.get('S3_BUCKET_NAME', 'tenant-atlantis-product-images')
-AWS_REGION = os.environ.get('AWS_REGION', 'us-west-2')
-
-# Initialize S3 client
-s3_client = boto3.client('s3', region_name=AWS_REGION)
+# The object store — S3 or GCS, chosen by STORAGE_PROVIDER. Construction is cheap
+# and credential-free; the cloud client is opened lazily on first use.
+store = build_object_store()
 
 PRODUCTS_PREFIX = 'products'
 METADATA_FILENAME = 'product.json'
@@ -35,42 +36,17 @@ def build_metadata_key(product_id: str) -> str:
 
 def fetch_product(product_id: str):
     metadata_key = build_metadata_key(product_id)
-    try:
-        response = s3_client.get_object(Bucket=S3_BUCKET, Key=metadata_key)
-        product_data = response['Body'].read().decode('utf-8')
-        product = json.loads(product_data)
-        product['metadata_s3_key'] = metadata_key
-        return product
-    except ClientError as e:
-        error_code = e.response.get('Error', {}).get('Code', '')
-        if error_code in ['NoSuchKey', '404']:
-            return None
-        raise
+    data = store.get(metadata_key)
+    if data is None:
+        return None
+    product = json.loads(data.decode('utf-8'))
+    product['metadata_key'] = metadata_key
+    return product
 
 
 def list_product_metadata_keys():
-    keys = []
-    continuation_token = None
-    while True:
-        kwargs = {
-            'Bucket': S3_BUCKET,
-            'Prefix': f"{PRODUCTS_PREFIX}/"
-        }
-        if continuation_token:
-            kwargs['ContinuationToken'] = continuation_token
-
-        response = s3_client.list_objects_v2(**kwargs)
-
-        for obj in response.get('Contents', []):
-            key = obj['Key']
-            if key.endswith(f"/{METADATA_FILENAME}"):
-                keys.append(key)
-
-        continuation_token = response.get('NextContinuationToken')
-        if not continuation_token:
-            break
-
-    return keys
+    keys = store.list_keys(f"{PRODUCTS_PREFIX}/")
+    return [key for key in keys if key.endswith(f"/{METADATA_FILENAME}")]
 
 
 @app.route('/health', methods=['GET'])
@@ -85,24 +61,20 @@ def health_check():
 
 @app.route('/ready', methods=['GET'])
 def readiness_check():
-    """Readiness check - verifies S3 bucket is accessible"""
-    try:
-        s3_client.head_bucket(Bucket=S3_BUCKET)
+    """Readiness check - verifies the storage bucket is accessible"""
+    if store.bucket_exists():
         return jsonify({
             'status': 'ready',
             'timestamp': datetime.utcnow().isoformat(),
-            's3_bucket': S3_BUCKET
+            'provider': store.provider,
+            'bucket': store.bucket
         }), 200
-    except NoCredentialsError:
-        return jsonify({
-            'status': 'not ready',
-            'error': 'AWS credentials not configured'
-        }), 503
-    except ClientError:
-        return jsonify({
-            'status': 'not ready',
-            'error': 'S3 bucket not accessible'
-        }), 503
+    return jsonify({
+        'status': 'not ready',
+        'provider': store.provider,
+        'error': f'{store.provider} bucket "{store.bucket}" not accessible '
+                 '(check credentials and bucket name)'
+    }), 503
 
 
 @app.route('/products', methods=['GET'])
@@ -113,12 +85,13 @@ def list_products():
         product_list = []
         for key in product_keys:
             try:
-                response = s3_client.get_object(Bucket=S3_BUCKET, Key=key)
-                product_data = response['Body'].read().decode('utf-8')
-                product = json.loads(product_data)
-                product['metadata_s3_key'] = key
+                data = store.get(key)
+                if data is None:
+                    continue
+                product = json.loads(data.decode('utf-8'))
+                product['metadata_key'] = key
                 product_list.append(product)
-            except ClientError as e:
+            except StorageError:
                 # Skip products that cannot be read
                 continue
 
@@ -126,13 +99,13 @@ def list_products():
             'products': product_list,
             'count': len(product_list)
         }), 200
-    except ClientError as e:
+    except StorageError as e:
         return jsonify({'error': f'Failed to list products: {str(e)}'}), 500
 
 
 @app.route('/products', methods=['POST'])
 def create_product():
-    """Create a new product with optional image upload to S3"""
+    """Create a new product with optional image upload to object storage"""
     try:
         data = request.get_json()
 
@@ -156,8 +129,9 @@ def create_product():
             if data.get('image_data'):
                 # Upload provided image data (base64 or URL in real app)
                 image_body = data['image_data'].encode('utf-8')
+                content_type = 'image/jpeg'
             else:
-                # Create a placeholder image object to demonstrate S3 integration
+                # Create a placeholder object to demonstrate storage integration
                 placeholder_data = {
                     'product_id': product_id,
                     'product_name': data['name'],
@@ -165,28 +139,23 @@ def create_product():
                     'created_at': datetime.utcnow().isoformat()
                 }
                 image_body = json.dumps(placeholder_data).encode('utf-8')
+                content_type = 'application/json'
 
-            s3_client.put_object(
-                Bucket=S3_BUCKET,
-                Key=image_key,
-                Body=image_body,
-                ContentType='image/jpeg' if data.get('image_data') else 'application/json'
-            )
-            product['image_s3_key'] = image_key
-        except ClientError as e:
+            store.put(image_key, image_body, content_type)
+            product['image_key'] = image_key
+        except StorageError as e:
             return jsonify({'error': f'Failed to upload image: {str(e)}'}), 500
 
         metadata_key = build_metadata_key(product_id)
 
         try:
-            s3_client.put_object(
-                Bucket=S3_BUCKET,
-                Key=metadata_key,
-                Body=json.dumps(product).encode('utf-8'),
-                ContentType='application/json'
+            store.put(
+                metadata_key,
+                json.dumps(product).encode('utf-8'),
+                'application/json',
             )
-            product['metadata_s3_key'] = metadata_key
-        except ClientError as e:
+            product['metadata_key'] = metadata_key
+        except StorageError as e:
             return jsonify({'error': f'Failed to store product metadata: {str(e)}'}), 500
 
         stored_product = fetch_product(product_id)
@@ -199,22 +168,17 @@ def create_product():
 
 @app.route('/products/<product_id>', methods=['GET'])
 def get_product(product_id):
-    """Get a specific product with S3 signed URL for image"""
+    """Get a specific product with a signed URL for its image"""
     product = fetch_product(product_id)
 
     if not product:
         return jsonify({'error': 'Product not found'}), 404
 
-    # Generate presigned URL for image if it exists
-    if 'image_s3_key' in product:
+    # Generate a signed URL for the image if it exists
+    if 'image_key' in product:
         try:
-            url = s3_client.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': S3_BUCKET, 'Key': product['image_s3_key']},
-                ExpiresIn=3600  # 1 hour
-            )
-            product['image_url'] = url
-        except ClientError as e:
+            product['image_url'] = store.signed_url(product['image_key'], 3600)  # 1 hour
+        except StorageError as e:
             product['image_url_error'] = str(e)
 
     return jsonify(product), 200
@@ -222,22 +186,21 @@ def get_product(product_id):
 
 @app.route('/products/<product_id>', methods=['DELETE'])
 def delete_product(product_id):
-    """Delete a product and its S3 image"""
+    """Delete a product and its stored image"""
     product = fetch_product(product_id)
 
     if not product:
         return jsonify({'error': 'Product not found'}), 404
 
-    # Delete image from S3 if exists
-    if 'image_s3_key' in product:
+    # Delete image from storage if it exists
+    if 'image_key' in product:
         try:
-            s3_client.delete_object(Bucket=S3_BUCKET, Key=product['image_s3_key'])
-        except ClientError:
-            pass  # Continue even if S3 delete fails
-    metadata_key = build_metadata_key(product_id)
+            store.delete(product['image_key'])
+        except StorageError:
+            pass  # Continue even if the object delete fails
     try:
-        s3_client.delete_object(Bucket=S3_BUCKET, Key=metadata_key)
-    except ClientError:
+        store.delete(build_metadata_key(product_id))
+    except StorageError:
         pass
 
     return jsonify({'message': 'Product deleted'}), 200
@@ -257,8 +220,9 @@ def index():
             'GET /products/<id>': 'Get a specific product',
             'DELETE /products/<id>': 'Delete a product'
         },
-        's3_bucket': S3_BUCKET,
-        'region': AWS_REGION
+        'provider': store.provider,
+        'bucket': store.bucket,
+        'location': store.location
     }), 200
 
 
