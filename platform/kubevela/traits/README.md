@@ -1,7 +1,5 @@
 # traits/ — TraitDefinitions
 
-> ⚠️ **Under construction** — this repository is a work in progress; content is incomplete and may change.
-
 Cross-cutting capabilities the platform team auto-injects onto components. This
 is the heart of the theme: developers declare *intent* and traits supply the
 *implementation* of observability, compliance, HA, and security.

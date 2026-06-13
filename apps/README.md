@@ -1,11 +1,13 @@
 # apps/ — Application source code
 
-> ⚠️ **Under construction** — this repository is a work in progress; content is incomplete and may change.
-
 This directory holds the **source code** for the demo applications — one folder
 per app. Each app is a normal, self-contained project (its own `Dockerfile`,
 dependencies, and `README.md`) that gets built and pushed to the local registry
 so a demo can deploy it.
+
+Apps are written **cloud-neutral**: storage, messaging, etc. go through small
+abstractions selected at runtime by env var, so the *same* image runs on AWS or
+GCP. That mirrors the "one interface" promise at the application tier.
 
 The **KubeVela `Application` that deploys an app is not here** — it lives with the
 demo that uses it, under `demos/<demo>/kubevela/`. That keeps the source reusable
@@ -26,7 +28,7 @@ demos/<demo>/kubevela/   # the KubeVela Application(s) that deploy the app(s)
 
 | App | What it is |
 |-----|------------|
-| [`product-catalog/`](product-catalog/) | A Flask REST API that stores product images in S3 (`/products`, `/health`, `/ready`). The headline app for the S3 demo. |
+| [`product-catalog/`](product-catalog/) | A Flask REST API that stores product images in an object-storage bucket — **AWS S3 or GCP GCS**, chosen at runtime by `STORAGE_PROVIDER` via an `ObjectStore` abstraction (`/products`, `/health`, `/ready`). The headline app for the one-interface bucket demo. |
 
 ## Adding an app
 

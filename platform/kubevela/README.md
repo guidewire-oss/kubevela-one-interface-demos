@@ -1,20 +1,21 @@
 # kubevela/ — KubeVela X-Definitions
 
-> ⚠️ **Under construction** — this repository is a work in progress; content is incomplete and may change.
-
 All KubeVela definitions live here, grouped by technology (KubeVela) like
-`../crossplane/` groups the Crossplane assets. These are the building blocks a
-developer references by name from their `Application`; the platform team owns them.
+`../crossplane/` and `../kcc/` group the cloud assets. These are the building
+blocks a developer references by name from their `Application`; the platform team
+owns them.
 
 ```
 kubevela/
-├── components/   # ComponentDefinitions — workloads + resource claims (bucket, …)
+├── components/   # ComponentDefinitions — workloads + the bucket claim (xp/ack/kcc backings)
+│   └── example/  #   a minimal Application that just claims a bucket
 ├── traits/       # TraitDefinitions — auto-injected HA, observability, compliance, …
 └── policies/     # PolicyDefinitions — topology, per-env overrides, guardrails
 ```
 
 Authored in CUE (or in Go via [`../../defkit/`](../../defkit/), which compiles to
-identical CUE). Applied with `vela def apply` (see `setup.sh` Phase 1).
+identical CUE). Applied with `vela def apply` (each track's `setup-*` script Phase 1
+applies the matching `bucket` backing).
 
 ```bash
 vela def apply platform/kubevela/traits/high-availability/high-availability.cue

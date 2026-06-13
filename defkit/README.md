@@ -1,7 +1,5 @@
 # defkit/ — Go-native X-Definition authoring
 
-> ⚠️ **Under construction** — this repository is a work in progress; content is incomplete and may change.
-
 [Defkit](https://kubevela.io/) is a Go SDK for authoring KubeVela X-Definitions
 (Component, Trait, Policy, WorkflowStep) in Go instead of hand-writing CUE.
 Available from **KubeVela v1.11.0-alpha.2**.

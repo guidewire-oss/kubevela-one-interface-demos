@@ -1,7 +1,5 @@
 # demos/ — Runnable scenarios
 
-> ⚠️ **Under construction** — this repository is a work in progress; content is incomplete and may change.
-
 Each subdirectory is a **self-contained, runnable scenario** that strings the
 shared building blocks (`../platform/`, `../apps/`, `../defkit/`) into a narrative
 for a specific audience or event.
@@ -9,9 +7,17 @@ for a specific audience or event.
 This is the **only** place event-specific content belongs. Keep the building
 blocks evergreen; let demos compose them.
 
-| Scenario | Audience | Status |
+| Scenario | Audience | Tracks |
 |----------|----------|--------|
-| [`kubecon-in-2026/`](kubecon-in-2026/) | KubeCon India 2026 — "One Interface To Rule Them All" | 🚧 in progress |
+| [`kubecon-in-2026/`](kubecon-in-2026/) | KubeCon India 2026 — "One Interface To Rule Them All" | AWS (Crossplane / ACK) + GCP (KCC) |
+
+## Per-track setup folders
+
+A scenario can demonstrate the *same* developer Application against several
+platform backings. `kubecon-in-2026/` keeps each cloud's bootstrap self-contained
+in its own folder — `aws-setup/` (Crossplane + ACK) and `gcp-setup/` (KCC) — each
+holding its `init-*`/`setup-*` scripts, `config.yaml`, and credentials. The shared
+KubeVela Application(s) live in the scenario's `kubevela/` folder.
 
 ## Adding a scenario
 

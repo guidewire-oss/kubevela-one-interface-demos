@@ -1,7 +1,5 @@
 # platform/ — The How
 
-> ⚠️ **Under construction** — this repository is a work in progress; content is incomplete and may change.
-
 This is the **platform team's** space. Everything here encapsulates best
 practices, governance, and cloud wiring so that application developers never
 have to. Definitions are authored in CUE (or in Go via [`../defkit/`](../defkit/),
@@ -19,15 +17,26 @@ Grouped by technology:
 
 | Directory | KubeVela kind | Purpose |
 |-----------|---------------|---------|
-| [`kubevela/components/`](kubevela/components/) | `ComponentDefinition` | Deployable building blocks a developer can request — web services, workers, and **claims** for cloud resources (database, bucket, queue). |
+| [`kubevela/components/`](kubevela/components/) | `ComponentDefinition` | Deployable building blocks a developer can request — web services, workers, and **claims** for cloud resources. The `bucket` claim ships in three interchangeable backings (`bucket-xp` / `bucket-ack` / `bucket-kcc`). |
 | [`kubevela/traits/`](kubevela/traits/) | `TraitDefinition` | Cross-cutting capabilities auto-injected onto components — HA, observability, compliance, security context. This is where "auto-inject best practices" lives. |
 | [`kubevela/policies/`](kubevela/policies/) | `PolicyDefinition` | App-wide governance — topology (which clusters/namespaces), per-environment overrides, guardrails. |
 
-### [`crossplane/`](crossplane/) — Crossplane assets
+### [`crossplane/`](crossplane/) — Crossplane assets (AWS S3)
 
-`Provider` / `ProviderConfig` / `Function` / `XRD` + `Composition` — the
-cloud-resource implementations a component claim resolves to. Vendor-neutral: Track 2
-swaps in ACK (`ack/`) without touching the developer's Application.
+`Provider` / `ProviderConfig` / `Function` / `XRD` + `Composition` — the AWS S3
+implementation the `bucket` claim resolves to on Track 1.
+
+### [`kcc/`](kcc/) — Google Config Connector assets (GCP GCS)
+
+The GCP analogue, lighter because KCC has no XRD/Composition/Function layer: the
+`ConfigConnector` (credential wiring) plus a `StorageBucket` example. This is what
+the `bucket` claim resolves to on Track 3 — the same developer claim, a different
+cloud.
+
+> **Vendor- and cloud-neutral by design.** The `bucket` claim is identical across
+> Track 1 (Crossplane → AWS S3), Track 2 (ACK → AWS S3), and Track 3 (KCC → GCP GCS).
+> Install one backing; the developer's Application never changes. ACK's manifests
+> live inline in `bucket-ack.cue` (ACK has no composition layer, like KCC).
 
 ## Authoring a definition
 

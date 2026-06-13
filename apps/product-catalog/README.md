@@ -1,7 +1,5 @@
 # Product Catalog API
 
-> ⚠️ **Under construction** — this repository is a work in progress; content is incomplete and may change.
-
 A simple Flask-based REST API that stores product metadata and images in an
 **object-storage bucket** — on **either AWS S3 or GCP Cloud Storage**, chosen at
 runtime. The API code is cloud-neutral: it talks to the `ObjectStore` abstraction
@@ -103,7 +101,9 @@ KubeVela `Application`:
 #   ./build-image.sh [image_name] [tag] [host_registry] [incluster_registry]
 ```
 
-(The k3d cluster + local registry are created by the demo's `init.sh`.)
+(The k3d cluster + local registry are created by the demo's track `init-*` script —
+e.g. `demos/kubecon-in-2026/aws-setup/init-with-xp.sh` or `gcp-setup/init-with-kcc.sh`.
+Each track's `setup-*` script runs this build for you.)
 
 ### Run standalone (without Kubernetes)
 
