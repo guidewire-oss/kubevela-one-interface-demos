@@ -85,6 +85,44 @@ spec:
               cpu: "500m"
               memory: "256Mi"
 
+    # Bucket Browser — read-only web UI (apps/bucket-browser) that browses the SAME
+    # bucket this Application provisions. No bucket claim of its own; it reads BUCKET_NAME
+    # (set per env by the override-<env> policies). Deploy + open it to SEE the objects.
+    - name: bucket-browser
+      type: webservice
+      properties:
+        image: k3d-registry.localhost:5000/bucket-browser:v1.0.0
+        imagePullPolicy: IfNotPresent
+        ports:
+          - port: 8080
+            expose: true
+        env:
+          - name: STORAGE_PROVIDER
+            value: "gcp"
+          - name: GOOGLE_CLOUD_PROJECT
+            value: "kubecon-in-2026"
+          - name: PORT
+            value: "8080"
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: "/gcp/key.json"
+        volumeMounts:
+          secret:
+            - name: gcp-key
+              mountPath: /gcp
+              secretName: gcp-key
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
     # Bucket Component (claim → Crossplane / ACK / KCC backing)
     # IDENTICAL to product-catalog.yaml — this is the one-interface artifact. On this
     # track the `bucket` claim is resolved by bucket-kcc.cue into a GCS StorageBucket
@@ -145,6 +183,19 @@ spec:
                 properties:
                   min: 1
                   max: 3
+          - name: bucket-browser
+            properties:
+              env:
+                - name: BUCKET_NAME
+                  value: "tenant-gokarna-product-catalog-images-dev"
+                - name: STORAGE_PROVIDER
+                  value: "gcp"
+                - name: GOOGLE_CLOUD_PROJECT
+                  value: "kubecon-in-2026"
+                - name: PORT
+                  value: "8080"
+                - name: GOOGLE_APPLICATION_CREDENTIALS
+                  value: "/gcp/key.json"
 
     - name: override-staging
       type: override
@@ -168,6 +219,19 @@ spec:
                 properties:
                   min: 2
                   max: 5
+          - name: bucket-browser
+            properties:
+              env:
+                - name: BUCKET_NAME
+                  value: "tenant-gokarna-product-catalog-images-staging"
+                - name: STORAGE_PROVIDER
+                  value: "gcp"
+                - name: GOOGLE_CLOUD_PROJECT
+                  value: "kubecon-in-2026"
+                - name: PORT
+                  value: "8080"
+                - name: GOOGLE_APPLICATION_CREDENTIALS
+                  value: "/gcp/key.json"
 
     - name: override-prod
       type: override
@@ -191,6 +255,19 @@ spec:
                 properties:
                   min: 3
                   max: 10
+          - name: bucket-browser
+            properties:
+              env:
+                - name: BUCKET_NAME
+                  value: "tenant-gokarna-product-catalog-images-prod"
+                - name: STORAGE_PROVIDER
+                  value: "gcp"
+                - name: GOOGLE_CLOUD_PROJECT
+                  value: "kubecon-in-2026"
+                - name: PORT
+                  value: "8080"
+                - name: GOOGLE_APPLICATION_CREDENTIALS
+                  value: "/gcp/key.json"
 
   # Workflow for multi-stage deployment with functional API testing
   workflow:

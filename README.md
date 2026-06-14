@@ -77,8 +77,8 @@ kubevela-one-interface-demos/
 ├── demos/                 # Runnable, self-contained scenarios (one per event/topic)
 │   └── kubecon-in-2026/
 │       ├── kubevela/      #     product-catalog.yaml (AWS) + product-catalog-gcp.yaml (GCP)
-│       ├── aws-setup/     #     AWS tracks — init/setup-with-xp (Crossplane), -with-ack (ACK), teardown-with-ack
-│       ├── gcp-setup/     #     GCP track — init/setup-with-kcc (KCC)
+│       ├── aws-setup/     #     AWS tracks — init/setup-with-xp (Crossplane), -with-ack (ACK), teardown; + .ipynb pairs
+│       ├── gcp-setup/     #     GCP track — init/setup-with-kcc (KCC); + .ipynb notebook pair
 │       ├── cleanup.sh     #     delete the local cluster + registry
 │       └── walkthrough.md #     slide beats mapped to commands
 ├── defkit/                # Go-native X-Definition authoring (KubeVela v1.11+)

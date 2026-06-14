@@ -51,6 +51,8 @@ print_step "Phase 2: Build + deploy the application (the What)"
 #      redeploy loop never needs to re-run init.sh.
 print_step "Phase 2a: Build application image"
 bash "$REPO_ROOT/apps/product-catalog/build-image.sh"
+# The bucket-browser web UI is a second component in the Application — build it too.
+bash "$REPO_ROOT/apps/bucket-browser/build-image.sh"
 
 # 2b — AWS credentials in the app namespaces (dev/staging/prod). App pods mount this
 #      secret to reach S3. setup.sh is a separate process from init.sh, so load

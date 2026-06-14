@@ -40,10 +40,10 @@ vela def get bucket                   # the intent-based bucket claim devs see
 cat demos/kubecon-in-2026/kubevela/product-catalog.yaml
 ```
 
-Land the point: one file declares the app, its traits (autoscaling, security,
-resources) and a **`bucket` claim** by name — no raw Kubernetes or cloud detail.
-The app code is cloud-neutral too (`apps/product-catalog/storage.py` talks to an
-`ObjectStore`, not to a cloud SDK).
+Land the point: one file declares the app (a REST API **and** a read-only
+`bucket-browser` web UI), its traits (autoscaling, security, resources), and a
+**`bucket` claim** by name — no raw Kubernetes or cloud detail. The app code is
+cloud-neutral too (`apps/*/storage.py` talks to an `ObjectStore`, not a cloud SDK).
 
 ## 4. One interface in action: deploy app + provision a bucket — ~6 min
 
@@ -63,6 +63,15 @@ Talk track: the developer asked for "production". The platform team's encoded be
 practices supplied HPA + PDB + spread + anti-affinity. The multi-env workflow
 promoted dev → staging → prod, and each env got its own globally-unique bucket
 (`…-dev`/`-staging`/`-prod`) — all from one Application. Governance runs itself.
+
+**See the objects — the bucket-browser UI.** The *same* Application also deploys a
+read-only `bucket-browser` web UI (the `bucket-browser` component) pointed at the very
+bucket the API writes to. Open it to show the objects the workflow's test products created:
+
+```bash
+kubectl -n dev port-forward svc/bucket-browser 8080:8080
+# open http://localhost:8080  → lists the bucket's objects; click one to view its contents
+```
 
 ## 5. One claim, three backings, two clouds — ~6 min
 
@@ -94,10 +103,17 @@ vela status product-catalog
 kubectl get storagebucket -A                 # a KCC-provisioned GCS bucket, same claim
 ```
 
+```bash
+# Same browser, now showing GCS objects — open it on the GCP cluster:
+kubectl -n dev port-forward svc/bucket-browser 8080:8080   # http://localhost:8080
+```
+
 Talk track: the developer file's *claim* did not change one character — across two
 AWS backends **and** a different cloud. `bucket-kcc.cue` even translates the claim's
 AWS-style `region` (`us-west-2`) to a valid GCP `location` (`us-west1`) so the dev
-YAML stays identical. That is one interface to rule them all.
+YAML stays identical. The **same `bucket-browser` image and UI** rides along unchanged
+— it just lists S3 objects on one cluster and GCS objects on the other. That is one
+interface to rule them all.
 
 ## 6. Looking ahead: Defkit (Go-native authoring) — ~4 min
 

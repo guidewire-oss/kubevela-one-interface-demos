@@ -16,8 +16,10 @@ blocks evergreen; let demos compose them.
 A scenario can demonstrate the *same* developer Application against several
 platform backings. `kubecon-in-2026/` keeps each cloud's bootstrap self-contained
 in its own folder — `aws-setup/` (Crossplane + ACK) and `gcp-setup/` (KCC) — each
-holding its `init-*`/`setup-*` scripts, `config.yaml`, and credentials. The shared
-KubeVela Application(s) live in the scenario's `kubevela/` folder.
+holding its `init-*`/`setup-*` scripts, **matching `00_init-*`/`01_setup-*` Jupyter
+notebooks** (the notebook form of those scripts, reusing the same `scripts/` helpers),
+`config.yaml`, and credentials. The shared KubeVela Application(s) live in the
+scenario's `kubevela/` folder.
 
 ## Adding a scenario
 

@@ -29,6 +29,7 @@ demos/<demo>/kubevela/   # the KubeVela Application(s) that deploy the app(s)
 | App | What it is |
 |-----|------------|
 | [`product-catalog/`](product-catalog/) | A Flask REST API that stores product images in an object-storage bucket — **AWS S3 or GCP GCS**, chosen at runtime by `STORAGE_PROVIDER` via an `ObjectStore` abstraction (`/products`, `/health`, `/ready`). The headline app for the one-interface bucket demo. |
+| [`bucket-browser/`](bucket-browser/) | A read-only Flask **web UI** that browses a bucket's objects and renders their contents — same cloud-neutral `ObjectStore` (S3 or GCS). Deploy it next to product-catalog to *see* the objects that app wrote, on either cloud. |
 
 ## Adding an app
 

@@ -38,7 +38,22 @@ cd gcp-setup && ./init-with-kcc.sh  && ./setup-with-kcc.sh
   cloud-resource orchestrator (Crossplane / the ACK controller / the Config Connector
   operator). It reads credentials from that folder's `.env.aws` (AWS) or `.env.gcp` (GCP).
 - `setup-*` applies the matching `bucket` backing (`vela def apply`), builds the app
-  image, creates per-namespace credential secrets, and deploys the Application.
+  images, creates per-namespace credential secrets, and deploys the Application.
+
+### Prefer notebooks?
+
+Each track also ships an **interactive Jupyter notebook pair** that runs the exact same
+steps cell-by-cell (they reuse the same `scripts/` helpers, so they never drift from the
+scripts):
+
+| Track | Notebooks |
+|-------|-----------|
+| AWS — Crossplane | `aws-setup/00_init-with-xp.ipynb` → `01_setup-with-xp.ipynb` |
+| AWS — ACK | `aws-setup/00_init-with-ack.ipynb` → `01_setup-with-ack.ipynb` |
+| GCP — KCC | `gcp-setup/00_init-with-kcc.ipynb` → `01_setup-with-kcc.ipynb` |
+
+Open the `00_…` notebook, run the cells top-to-bottom, then the `01_…` notebook — the
+notebook form of `init-*`/`setup-*`. Good for a guided, narrated run on stage.
 
 Tear down: `aws-setup/teardown-with-ack.sh` first on the ACK track (empties the S3
 buckets — ACK has no force-destroy), then `./cleanup.sh` to delete the cluster.
