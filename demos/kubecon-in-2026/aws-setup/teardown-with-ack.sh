@@ -45,6 +45,6 @@ fi
 print_step "Phase 2: Delete the Application"
 # With the buckets now empty, the ACK controller's DeleteBucket succeeds as the CRs are
 # removed. -y skips the confirmation prompt.
-vela delete "$APP_NAME" -y
+vela delete "$APP_NAME" -n default -y
 
 print_success "ACK teardown complete. Run ../cleanup.sh next to delete the cluster + registry."
